@@ -16,21 +16,25 @@ import static org.junit.Assert.*;
  */
 public class ProcesadorTest {
     
+    Mensajes mensaje;
+    Procesador procesador;
+
     public ProcesadorTest() {
     }
-        /**
+     /**
      * Test of serializaMensaje method, of class Procesador.
      */
     @Test
     public void testSerializaMensaje() {
-        System.out.println("serializaMensaje");
-        Mensajes mensaje = null;
-        Procesador instance = new ProcesadorImpl();
-        String expResult = "";
-        String result = instance.serializaMensaje(mensaje);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        ConstructorMensajes mensajeC = new ConstructorMensajes();
+        procesador= new Procesador();
+        Mensaje mensaje=mensajeC.conTipo("IDENIFY")
+                                .conNombreUsuario("Angel")
+                                .construyeMensaje();
+        String mensajePrueba="{\"tipo\": \"IDENTIFY\", \"nombreUsuario\": \"Angel\"}";
+        String mensajeComparar= procesador.serializaMensaje(); 
+        assertEquals(mensajePrueba, mensajeComparar);                       
+
     }
 
     /**
@@ -38,15 +42,16 @@ public class ProcesadorTest {
      */
     @Test
     public void testDeserializaMensaje() {
-        System.out.println("deserializaMensaje");
-        String mensaje = "";
-        Procesador instance = new ProcesadorImpl();
-        Mensajes expResult = null;
-        Mensajes result = instance.deserializaMensaje(mensaje);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        String mensajePrueba="{\"tipo\": \"IDENTIFY\", \"nombreUsuario\": \"Angel\"}";
+        ConstructorMensajes mensajeC = new ConstructorMensajes();
+        procesador= new Procesador();
+        Mensaje mensaje=mensajeC.conTipo("IDENIFY")
+                                .conNombreUsuario("Angel")
+                                .construyeMensaje();
+        Mensaje mensajeComparar = procesador.deserializaMensaje();
+        assertEquals(mensaje, mensajeComparar);            
     }
+
 
     public class ProcesadorImpl extends Procesador {
     }
