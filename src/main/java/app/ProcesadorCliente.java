@@ -29,16 +29,28 @@ public class ProcesadorCliente extends Procesador{
             out= new DataOutputStream(socket.getOutputStream());
             System.out.println(in.readUTF());
             
-            String jsonNombre="{ \"type\": \"IDENTIFY\",\n" + "  \"username\": \"Kimberly\" }";
+            String jsonNombre="{ \"type\": \"IDENTIFY\"," + "  \"username\": \"Kimberly\" }";
             
             out.writeUTF(jsonNombre);
             
             System.out.println(in.readUTF());
-            
+            this.start();
+            this.run();
             
             
         } catch (IOException ex) {
             Logger.getLogger(ProcesadorCliente.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    @Override public void run(){
+        boolean salirCiclo=false;
+        String mensaje=null;
+        while(!salirCiclo){
+            scanner.nextLine();
+            if(mensaje.equals("") ||mensaje == null)
+                salirCiclo=true;
+            
         }
     }
 }
