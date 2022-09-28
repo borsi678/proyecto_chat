@@ -27,14 +27,14 @@ public class ConstructorMensajes {
         return this;
     }
     
-    public ConstructorMensajes conNosmbresUsuarios(String[] nombresUsuarios){
+    public ConstructorMensajes conNombresUsuarios(String[] nombresUsuarios){
         this.mensaje.setNombresUsuarios(nombresUsuarios);
         return this;
     }
 
-    public Mensajes construyeMensaje() throws Exception {
+    public Mensajes construyeMensaje() throws ExcepcionMensajeInvalido {
         if(!this.mensaje.estadoValido())
-            throw new Exception("Estado de mensaje invalido");
+            throw new ExcepcionMensajeInvalido("Estado de mensaje invalido");
         return this.mensaje;
     }
 }
