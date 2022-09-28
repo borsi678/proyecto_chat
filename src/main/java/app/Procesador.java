@@ -3,10 +3,18 @@ package app;
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.net.ServerSocket;
 
-public abstract class Procesador {
+public abstract class Procesador extends Thread {
     
-    public Procesador(){}
+    protected DataInputStream in;
+    protected DataOutputStream out;
+    
+    public void empezar(){}
+    
+    
     
     public String serializaMensaje(Mensajes mensaje) throws JsonProcessingException{
         ObjectMapper mapeador = new ObjectMapper();
