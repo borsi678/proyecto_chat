@@ -104,4 +104,14 @@ public class Mensajes {
             throw new ExcepcionMensajeInvalido("Mensaje no valido");
         return true;
     }
+    
+    public void vacia(){
+        this.tipo=null;
+        this.mensaje=null;
+        this.operacion=null;
+        this.nombreUsuario=null;
+        this.nombresUsuarios=null;
+        this.nombreCuarto=null;
+        this.estado=null;
+    }
 }

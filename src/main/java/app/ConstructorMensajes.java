@@ -31,10 +31,24 @@ public class ConstructorMensajes {
         this.mensaje.setNombresUsuarios(nombresUsuarios);
         return this;
     }
+    
+    public ConstructorMensajes conEstado(String estado){
+        this.mensaje.setEstado(estado);
+        return this;
+    }
 
+    public ConstructorMensajes conNombreCuarto(String nombreCuarto){
+        this.mensaje.setNombreCuarto(nombreCuarto);
+        return this;
+    }
+    
     public Mensajes construyeMensaje() throws ExcepcionMensajeInvalido {
         if(!this.mensaje.estadoValido())
             throw new ExcepcionMensajeInvalido("Estado de mensaje invalido");
         return this.mensaje;
+    }
+    
+    public void vacia(){
+        mensaje.vacia();
     }
 }
