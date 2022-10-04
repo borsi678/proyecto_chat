@@ -5,8 +5,8 @@ public class Usuario {
     private String nombre;
     private EstadoUsuario estado;
     
-    public Usuario(){
-        this.nombre="";
+    public Usuario(String nombre){
+        this.nombre=nombre;
         this.estado=EstadoUsuario.ACTIVE;
     }
     
@@ -36,7 +36,7 @@ public class Usuario {
         if(!(objeto instanceof Usuario))
             return false;
         Usuario usuarioComparar=(Usuario) objeto;
-        if(this.nombre.equals(usuarioComparar.nombre) && this.estado==usuarioComparar.estado)
+        if(this.nombre.equals(usuarioComparar.nombre) )
             return true;
         return false;
     }

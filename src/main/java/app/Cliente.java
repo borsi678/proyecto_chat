@@ -7,7 +7,7 @@ public class Cliente {
     private Usuario usuario;
 
     public Cliente() {
-        this.usuario=new Usuario();
+        this.usuario=new Usuario("");
     }
 
     public void iniciaCliente() {
@@ -18,5 +18,9 @@ public class Cliente {
         int puerto = scanner.nextInt();
         ProcesadorCliente procesador = new ProcesadorCliente(this);
         procesador.iniciaConexion(direccionIP, puerto);
+    }
+    
+    public void setNombreUsuario(String nombre){
+        usuario.setNombre(nombre);
     }
 }

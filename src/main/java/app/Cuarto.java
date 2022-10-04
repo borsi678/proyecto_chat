@@ -8,9 +8,9 @@ public class Cuarto {
     private LinkedList<Usuario> usuariosInvitados;
     private Usuario usuarioCreador;
     
-    public Cuarto(){
-        this.nombre ="";
-        this.usuarioCreador = null;        
+    public Cuarto(String nombre){
+        this.nombre =nombre;
+        this.usuarioCreador = new Usuario("Servidor");        
         this.usuariosUnidos = new LinkedList<Usuario>();
         this.usuariosInvitados = new LinkedList<Usuario>();
     }

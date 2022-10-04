@@ -10,13 +10,13 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize.Inclusion;
 @JsonAutoDetect(fieldVisibility = Visibility.ANY)
 public class Mensajes {
     @JsonAlias({ "type", "message", "operation", "username", "roomname", "status", "usernames"})
-    String tipo;
-    String mensaje;
-    String operacion;
-    String nombreUsuario;
-    String nombreCuarto;
-    String estado;
-    String[] nombresUsuarios;
+    private String tipo;
+    private String mensaje;
+    private String operacion;
+    private String nombreUsuario;
+    private String nombreCuarto;
+    private String estado;
+    private String[] nombresUsuarios;
 
     public Mensajes(){
         this.tipo=null;
@@ -44,7 +44,7 @@ public class Mensajes {
     }
     
     @JsonGetter("username")
-    public String getNombresuario(){
+    public String getNombreUsuario(){
         return this.nombreUsuario;
     } 
     
@@ -59,7 +59,7 @@ public class Mensajes {
     }
     
     @JsonGetter("roomname")
-    public String getnombreCuarto(){
+    public String getNombreCuarto(){
         return this.nombreCuarto;
     }
  

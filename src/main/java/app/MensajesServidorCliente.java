@@ -6,18 +6,23 @@ public class MensajesServidorCliente {
     private static ConstructorMensajes constructor=new ConstructorMensajes();
 
 
-    public static Mensajes conTIpoMensajeOperacionUsuaro(String mensaje){
+    public static Mensajes conTIpoMensajeOperacionUsuario(String mensaje, TiposMensaje tipo){
+        String[] argumentosMensaje=mensaje.split(" ");
         constructor.vacia();
-        TiposMensaje operacion = convertirCadenaAMensaje(mensaje);
+        TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
         if(operacion == TiposMensaje.INVALID)
             throw new ExcepcionMensajeInvalido();
-        
-        return constructor.conTipo(operacion.toString())
-                .construyeMensaje();
-        
+        mensaje="";
+        for(int i = 2; i<argumentosMensaje.length; i++)
+            mensaje+=argumentosMensaje[i];
+        return constructor.conTipo(tipo.toString())
+                                    .conOperacion(operacion.toString())
+                                    .conMensaje(mensaje)
+                                    .conNombreUsuario(argumentosMensaje[1])
+                                    .construyeMensaje();
     }
     
-    public Mensajes conTipoUsuario(String mensaje){
+    public static Mensajes conTipoUsuario(String mensaje){
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
@@ -29,7 +34,7 @@ public class MensajesServidorCliente {
 
     }
 
-    public Mensajes conTipoMensajeOperacion(String mensaje, TiposMensaje tipo){
+    public static Mensajes conTipoMensajeOperacion(String mensaje, TiposMensaje tipo){
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
@@ -43,7 +48,7 @@ public class MensajesServidorCliente {
         
     }
 
-    public Mensajes conTipoEstado(String mensaje){
+    public static Mensajes conTipoEstado(String mensaje){
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
@@ -55,7 +60,7 @@ public class MensajesServidorCliente {
         
     }
 
-    public Mensajes conTipoUsuarioEstado(String mensaje){
+    public static Mensajes conTipoUsuarioEstado(String mensaje){
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
@@ -68,7 +73,7 @@ public class MensajesServidorCliente {
 
     }
 
-    public Mensajes conTipoMensajeOperacionEstado(String mensaje, TiposMensaje tipo){
+    public static Mensajes conTipoMensajeOperacionEstado(String mensaje, TiposMensaje tipo){
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
@@ -83,13 +88,13 @@ public class MensajesServidorCliente {
                                     .construyeMensaje();
     }
 
-    public Mensajes conTipo(String mensaje){
+    public static Mensajes conTipo(String mensaje){
         constructor.vacia();
         return constructor.conTipo(mensaje)
                                      .construyeMensaje();
     }
 
-    public Mensajes conTipoUsuarioMensaje(String mensaje){
+    public static Mensajes conTipoUsuarioMensaje(String mensaje){
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
@@ -103,7 +108,7 @@ public class MensajesServidorCliente {
                                     .construyeMensaje();
     }
 
-    public Mensajes conTipoMensaje(String mensaje){
+    public static Mensajes conTipoMensaje(String mensaje){
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
@@ -118,7 +123,7 @@ public class MensajesServidorCliente {
                                     .construyeMensaje();
     }
 
-    public Mensajes conTipoNombreSala(String mensaje){
+    public static Mensajes conTipoNombreCuarto(String mensaje){
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
@@ -129,7 +134,7 @@ public class MensajesServidorCliente {
                                     .construyeMensaje();
     }
 
-    public Mensajes conTipoMensajeUsuarioNombreSala(String mensaje){
+    public static Mensajes conTipoMensajeUsuarioNombreCuarto(String mensaje){
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
@@ -144,7 +149,7 @@ public class MensajesServidorCliente {
                                      .construyeMensaje();
     }
 
-    public Mensajes conTipoNombreSalaUsuario(String mensaje){
+    public static Mensajes conTipoNombreCuartoUsuario(String mensaje){
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
@@ -157,7 +162,7 @@ public class MensajesServidorCliente {
         
     }
 
-    public Mensajes conTipoUsuarios(String mensaje){
+    public static Mensajes conTipoUsuarios(String mensaje){
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
@@ -172,7 +177,7 @@ public class MensajesServidorCliente {
                                      .construyeMensaje();
     }
 
-    public Mensajes conTipoNombreSalaMensaje(String mensaje){
+    public static Mensajes conTipoNombreCuartoMensaje(String mensaje){
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
@@ -186,7 +191,7 @@ public class MensajesServidorCliente {
                                      .construyeMensaje();
     }
 
-    public Mensajes conTipoMensajeOperacionNombreSala(String mensaje, TiposMensaje tipo){
+    public static Mensajes conTipoMensajeOperacionNombreCuarto(String mensaje, TiposMensaje tipo){
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
@@ -201,7 +206,7 @@ public class MensajesServidorCliente {
                                      .construyeMensaje();
     }
 
-    public Mensajes conTipoNombreSalaUsuarios(String mensaje){
+    public static Mensajes conTipoNombreCuartoUsuarios(String mensaje){
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
@@ -216,7 +221,7 @@ public class MensajesServidorCliente {
                                      .construyeMensaje();
     }
 
-    public Mensajes conTipoNombreSalaUsuarioMensaje(String mensaje){
+    public static Mensajes conTipoNombreCuartoUsuarioMensaje(String mensaje){
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
