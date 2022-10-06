@@ -7,6 +7,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.LinkedList;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Servidor {
 
@@ -18,7 +20,7 @@ public class Servidor {
         this.listaUsuarios = new LinkedList<Usuario>();
         this.listaCuartos = new LinkedList<Cuarto>();
         this.listaCuartos.add(new Cuarto("General"));
-        this.listaSockets= new LinkedList<Socket>();
+        this.listaSockets = new LinkedList<Socket>();
     }
 
     public void iniciaServidor() {
@@ -28,41 +30,53 @@ public class Servidor {
             int puerto = scanner.nextInt();
             ServerSocket socketServidor = new ServerSocket(puerto);
             System.out.println("Iniciando servidor...");
-            Socket socketCliente;
-            while (true) {
-                socketCliente = socketServidor.accept();
-                
-                DataInputStream entrada = new DataInputStream(socketCliente.getInputStream());
-                DataOutputStream salida = new DataOutputStream(socketCliente.getOutputStream());
+            estableceConexionCliente(socketServidor);
+        } catch (IOException ex) {
+            System.out.println("No se pudo iniciar el servidor.\n Saliendo...");
+        }
+    }
 
-                salida.writeUTF("Identificate:");
-                String nombreCliente = entrada.readUTF();
-                System.out.println(nombreCliente);
-                ProcesadorServidor procesadorServidor = new ProcesadorServidor(this, entrada, salida);
-                procesadorServidor.procesaNuevaConexion(nombreCliente);
+    public void estableceConexionCliente(ServerSocket socketServidor) {
+        Socket socketCliente;
+        while (true) {
+            try {
+                socketCliente = socketServidor.accept();
+
+                ProcesadorServidor procesadorServidor = new ProcesadorServidor(this, socketCliente);
                 procesadorServidor.start();
 
+            } catch (IOException ex) {
+                System.out.println("No se pudo establecer conexion con el cliente\n Reintentando...");
+                estableceConexionCliente(socketServidor);
             }
-        } catch (IOException ex) {
-            System.out.println("No se pudo iniciar el servidor");
         }
-
     }
+
 
     public void agregaUsuario(Usuario usuario) {
         listaUsuarios.add(usuario);
     }
-    
-    public void agregaCuarto(Cuarto cuarto){
+
+    public void agregaCuarto(Cuarto cuarto) {
         listaCuartos.add(cuarto);
     }
-    public boolean contieneUsuario(Usuario usuario){
-        return listaUsuarios.contains(usuario);
+
+    public void agregaSocketCliente(Socket socketCliente) {
+        this.listaSockets.add(socketCliente);
     }
-    
-    public void transmiteMensajeClientes(String mensaje) throws IOException{
+
+    public boolean contieneUsuario(Usuario usuario) {
+        for (Usuario usuarioServidor : listaUsuarios) {
+            if (usuarioServidor.getNombre().equals(usuario.getNombre())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void transmiteMensajeClientes(String mensaje) throws IOException {
         DataOutputStream salida;
-        for(Socket clienteConectado : listaSockets){
+        for (Socket clienteConectado : listaSockets) {
             salida = new DataOutputStream(clienteConectado.getOutputStream());
             salida.writeUTF(mensaje);
         }

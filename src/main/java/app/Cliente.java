@@ -1,13 +1,20 @@
 package app;
 
+import java.io.IOException;
+import java.net.Socket;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Cliente {
 
     private Usuario usuario;
+    private ProcesadorCliente procesador;
+    private Scanner scanner;
 
     public Cliente() {
         this.usuario=new Usuario("");
+        this.scanner= new Scanner(System.in);
     }
 
     public void iniciaCliente() {
@@ -16,11 +23,48 @@ public class Cliente {
         String direccionIP = scanner.nextLine();
         System.out.println("Introduce puerto del servidor");
         int puerto = scanner.nextInt();
-        ProcesadorCliente procesador = new ProcesadorCliente(this);
-        procesador.iniciaConexion(direccionIP, puerto);
+        estableceConexionServidor(direccionIP, puerto);
+        escrituraMensajesUsuario();
+    }
+    public void estableceConexionServidor(String direccionIP, int puerto){
+        try {
+            Socket socket=new Socket(direccionIP, puerto);
+            procesador=new ProcesadorCliente(this, socket);
+            procesador.iniciaConexion();
+            procesador.start();
+            
+        } catch (IOException ex) {
+            System.out.println(ex.toString());
+            iniciaCliente();
+        }
+        
+    }
+    
+    public void escrituraMensajesUsuario(){
+        String mensaje="";
+        while(!(mensaje.equals("DISCONNECT"))){
+            try {
+                mensaje=scanner.nextLine();
+                if(mensaje.equals("") || mensaje == null)
+                    continue;
+                procesador.menuMensajes(mensaje);
+            } catch (IOException ex) {
+                System.out.println("No se pudo enviar el mensaje, intentelo de nuevo.");
+            }
+        }
+        try {
+            procesador.menuMensajes(mensaje);
+            iniciaCliente();
+        } catch (IOException ex) {
+            System.out.println("Saliendo del programa");
+        }
     }
     
     public void setNombreUsuario(String nombre){
         usuario.setNombre(nombre);
+    }
+    
+    public void imprimeMensaje(String mensaje){
+        System.out.println(mensaje);
     }
 }

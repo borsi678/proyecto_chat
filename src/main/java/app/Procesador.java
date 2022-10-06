@@ -9,19 +9,11 @@ import java.net.ServerSocket;
 
 public abstract class Procesador extends Thread {
     
-    protected DataInputStream in;
-    protected DataOutputStream out;
-    
-    public void empezar(){}
-    
-    
+    protected DataInputStream entrada;
+    protected DataOutputStream salida;
     
     public String serializaMensaje(Mensajes mensaje) throws JsonProcessingException{
         ObjectMapper mapeador = new ObjectMapper();
-//        SimpleModule modulo= new SimpleModule();
-//        modulo.addSerializer(Mensajes.class, new MensajeSerializado());
-//        mapeador.registerModule(modulo);
-//        
         return mapeador.writeValueAsString(mensaje);
     }
     

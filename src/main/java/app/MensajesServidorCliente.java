@@ -38,7 +38,7 @@ public class MensajesServidorCliente {
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
-        mensaje=mensaje.replace("/"+operacion.toString(), "");
+        mensaje=mensaje.replace(operacion.toString(), "");
         if(operacion == TiposMensaje.INVALID)
             throw new ExcepcionMensajeInvalido();
         return constructor.conTipo(tipo.toString())

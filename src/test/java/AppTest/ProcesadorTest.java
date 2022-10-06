@@ -22,7 +22,7 @@ public class ProcesadorTest {
     @Test
     public void testSerializaMensaje() throws JsonProcessingException  {
         ConstructorMensajes mensajeC = new ConstructorMensajes();
-        procesador= new ProcesadorCliente(null);
+        procesador= new ProcesadorCliente();
         String[] nombres={"Uno", "Dos", "tres"};
         Mensajes mensaje=mensajeC.conTipo(" IDENTIFY")
                                 .conNombreUsuario(" Angel")
@@ -41,7 +41,7 @@ public class ProcesadorTest {
     public void testDeserializaMensaje() throws JsonProcessingException  {
         String mensajePrueba="{\"type\": \"IDENTIFY\", \"username\": \"Angel\"}";
         ConstructorMensajes mensajeC = new ConstructorMensajes();
-        procesador= new ProcesadorCliente(null);
+        procesador= new ProcesadorCliente();
         Mensajes mensaje=mensajeC.conTipo("IDENTIFY")
                                 .conNombreUsuario("Angel")
                                 .construyeMensaje();

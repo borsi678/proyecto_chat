@@ -99,6 +99,10 @@ public class Mensajes {
         this.nombreCuarto=nombreCuarto;
     }
     
+    @Override
+    public String toString(){
+        return String.format("TIpo : %s,Operacion: %s, Usuario: %s , Nombre Sala : %s, Usuarios: %s EStado: %s, Mensaje: %s", this.tipo, this.operacion, this.nombreUsuario, this.nombreCuarto, this.nombresUsuarios, this.estado, this.mensaje );
+    }
     public boolean estadoValido() throws ExcepcionMensajeInvalido{
         if(this.tipo == null || this.tipo.equals(""))
             throw new ExcepcionMensajeInvalido("Mensaje no valido");
