@@ -67,4 +67,8 @@ public class Cliente {
     public void imprimeMensaje(String mensaje){
         System.out.println(mensaje);
     }
+    
+    public void cambiaEstadoUsuario(EstadoUsuario estado ){
+        usuario.setEstado(estado);
+    }
 }

@@ -1,7 +1,7 @@
 package app;
 
 public enum EstadoUsuario {
-    ACTIVE, AWAY, BUSY;
+    ACTIVE, AWAY, BUSY,NONE;
     
     @Override public String toString(){
         switch(this){

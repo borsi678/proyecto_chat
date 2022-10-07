@@ -237,11 +237,19 @@ public class MensajesServidorCliente {
     }
 
     public static TiposMensaje convertirCadenaAMensaje(String cadena){
-        for(TiposMensaje valores : TiposMensaje.values()){
-            if(cadena.equals(valores.toString()))
-                return valores;
+        for(TiposMensaje valor : TiposMensaje.values()){
+            if(cadena.equals(valor.toString()))
+                return valor;
         }
         return TiposMensaje.INVALID;
+    }
+    
+    public static EstadoUsuario convertirCadenaAEstadoUsuario(String cadena){
+        for(EstadoUsuario estado : EstadoUsuario.values()){
+            if(cadena.equals(estado.toString()))
+                return estado;
+        }
+        return EstadoUsuario.NONE;
     }
     
 }

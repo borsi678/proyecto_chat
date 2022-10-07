@@ -32,26 +32,26 @@ public class ProcesadorCliente extends Procesador{
     
     public void iniciaConexion() throws IOException{
         try {
-            String mensajeServidor=entrada.readUTF();
-            Mensajes mensaje=deserializaMensaje(mensajeServidor);
-            imprimeMensajeCliente(mensaje);
+            String mensajeServidorSerializado=entrada.readUTF();
+            Mensajes mensajeServidor=deserializaMensaje(mensajeServidorSerializado);
+            cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
             Scanner scanner = new Scanner(System.in);
             String nombre=scanner.nextLine();
             Mensajes mensajeCliente=MensajesServidorCliente.conTipoUsuario(String.format("IDENTIFY %s", nombre));
-            String serializada = serializaMensaje(mensajeCliente);
-            salida.writeUTF(serializada);
-            mensajeServidor=entrada.readUTF();
-            mensaje=deserializaMensaje(mensajeServidor);
-            if(mensaje.getTipo().equals("INFO") 
-                    && mensaje.getOperacion().equals("IDENTIFY")){
-                imprimeMensajeCliente(mensaje);
+            salida.writeUTF(serializaMensaje(mensajeCliente));
+            mensajeServidorSerializado=entrada.readUTF();
+            mensajeServidor=deserializaMensaje(mensajeServidorSerializado);
+            if(mensajeServidor.getTipo().equals("INFO") 
+                    && mensajeServidor.getOperacion().equals("IDENTIFY")){
+                cliente.imprimeMensaje("INFO Se ha identificado satisfactoriamente");
                 return;
             }
-            else if(mensaje.getTipo().equals("WARNING") 
-                    && mensaje.getOperacion().equals("IDENTIFY") && mensaje.getNombreUsuario().equals(nombre)){
-                this.cliente.imprimeMensaje(mensaje.getTipo()+" "+mensaje.getMensaje());
+            else if(mensajeServidor.getTipo().equals("WARNING") 
+                    && mensajeServidor.getOperacion().equals("IDENTIFY") 
+                    && mensajeServidor.getNombreUsuario().equals(nombre)){
+                this.cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
                 this.cliente.imprimeMensaje("Intentalo de nuevo");
-                iniciaConexion();
+                cliente.iniciaCliente();
             }else
                 throw new IOException();
         } catch(NullPointerException ex){
@@ -74,73 +74,181 @@ public class ProcesadorCliente extends Procesador{
         }
     }
     
-    public void imprimeMensajeCliente(Mensajes mensaje){
-        String mensajeCliente="";
-        if(mensaje.getTipo() != null )
-            mensajeCliente+=mensaje.getTipo().toUpperCase()+" ";
-        if(mensaje.getNombreCuarto()!= null)
-            mensajeCliente+=mensaje.getNombreCuarto()+" ";
-        if(mensaje.getNombreUsuario() != null)
-            mensajeCliente+=mensaje.getNombreUsuario()+" ";
-        if(mensaje.getMensaje() != null)
-            mensajeCliente+=mensaje.getMensaje()+" ";
-        if(mensaje.getNombresUsuarios()!= null)
-            mensajeCliente+=mensaje.getNombresUsuarios().toString()+" ";
-        this.cliente.imprimeMensaje(mensajeCliente);
-    }
     
-    public void enviaMensajeServidor(Mensajes mensaje){
-        try {
-            String mensajeSerializado=serializaMensaje(mensaje);
-        } catch (JsonProcessingException ex) {
-            System.out.println("No se pudo enviar el mensaje");
-        }
-        
-    }
-    
+    @Override
     public void menuMensajes(String mensaje) throws JsonProcessingException, IOException{
         String[] argumentoMensaje=mensaje.split(" ");
         if(argumentoMensaje[0].equals("USERS") ){
-            Mensajes mensajeEnviar = MensajesServidorCliente.conTipo(mensaje);
-            mensaje=serializaMensaje(mensajeEnviar);
-            salida.writeUTF(mensaje);
+            recibeListaUsuariosServidor(argumentoMensaje[0]);
         }
         else if(argumentoMensaje[0].equals("STATUS")){
-            Mensajes mensajeEnviar = MensajesServidorCliente.conTipoEstado(mensaje);
-            mensaje=serializaMensaje(mensajeEnviar);
-            salida.writeUTF(mensaje);
+            cambiaEstado(mensaje);
         }
         else if(argumentoMensaje[0].equals("MESSAGE")){
-            Mensajes mensajeEnviar = MensajesServidorCliente.conTipoUsuarioMensaje(mensaje);
-            mensaje=serializaMensaje(mensajeEnviar);
-            salida.writeUTF(mensaje);
+            enviaMensajePrivado(mensaje);
         }
         else if(argumentoMensaje[0].equals("PUBLIC_MESSAGE")){
-            Mensajes mensajeEnviar = MensajesServidorCliente.conTipoMensaje(mensaje);
-            mensaje=serializaMensaje(mensajeEnviar);
-            salida.writeUTF(mensaje);
+            enviaMensajePublico(mensaje);
         }
-        else if(argumentoMensaje[0].equals("NEW_ROOM") 
-                || argumentoMensaje[0].equals("JOIN_ROOM")
-                || argumentoMensaje[0].equals("ROOM_USERS")
-                || argumentoMensaje[0].equals("LEAVE_ROOM")){
-            Mensajes mensajeEnviar = MensajesServidorCliente.conTipoNombreCuarto(mensaje);
-            mensaje = serializaMensaje(mensajeEnviar);
-            salida.writeUTF(mensaje);
+        else if(argumentoMensaje[0].equals("NEW_ROOM")){
+            creaNuevoCuarto(mensaje);
+        }
+        else if( argumentoMensaje[0].equals("JOIN_ROOM")){
+            unirseCuarto(mensaje);
+        }
+        else if(argumentoMensaje[0].equals("ROOM_USERS")){
+            recibeUsuariosCuarto(mensaje);
+        }
+        else if(argumentoMensaje[0].equals("LEAVE_ROOM")){
+            abandonaCuarto(mensaje);
             
         }
         else if(argumentoMensaje[0].equals("INVITE")){
-            Mensajes mensajeEnviar = MensajesServidorCliente.conTipoNombreCuartoUsuarios(mensaje);
-            mensaje=serializaMensaje(mensajeEnviar);
-            salida.writeUTF(mensaje);
+            invitaUsuariosCuarto(mensaje);
         }
         else if(argumentoMensaje[0].equals("ROOM_MESSAGE")){
-            Mensajes mensajeEnviar = MensajesServidorCliente.conTipoNombreCuartoMensaje(mensaje);
-            mensaje=serializaMensaje(mensajeEnviar);
-            salida.writeUTF(mensaje);
+            enviaMensajeCuarto(mensaje);
         } else if(argumentoMensaje[0].equals("DISCONNECT")){
-            
+            Mensajes mensajeCliente=MensajesServidorCliente.conTipo("DISCONNECT");
+            salida.writeUTF(serializaMensaje(mensajeCliente));
         }
             
+    }
+    
+    public void recibeListaUsuariosServidor(String tipo) throws JsonProcessingException, IOException{
+        Mensajes mensajeCliente= MensajesServidorCliente.conTipo(tipo);
+        salida.writeUTF(serializaMensaje(mensajeCliente));
+        Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
+        if(mensajeServidor.getTipo().equals("USER_LIST") && mensajeServidor.getNombresUsuarios() != null){
+            cliente.imprimeMensaje(mensajeServidor.getNombresUsuarios().toString());
+        }
+    }
+    
+    public void cambiaEstado(String mensaje) throws IOException, ExcepcionEstadoInvalido{
+        Mensajes mensajeCliente=MensajesServidorCliente.conTipoEstado(mensaje);
+        salida.writeUTF(serializaMensaje(mensajeCliente));
+        Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
+        String estado=mensajeCliente.getEstado();
+        if(mensajeServidor.getTipo().equals("INFO") && mensajeServidor.getOperacion().equals("STATUS")
+                && mensajeServidor.getMensaje().equals("success")){
+            EstadoUsuario estadoUsuario= MensajesServidorCliente.convertirCadenaAEstadoUsuario(estado);
+            cliente.cambiaEstadoUsuario(estadoUsuario);
+            cliente.imprimeMensaje("INFO Estado cambiado satisfactoriamente.");
+            return;
+        } else if(mensajeServidor.getTipo().equals("WARNING") && mensajeServidor.getOperacion().equals("STATUS")
+                && mensajeServidor.getMensaje().equals("El estado ya es \'"+estado+"\'")
+                && mensajeServidor.getEstado().equals(estado)){
+            cliente.imprimeMensaje(mensajeServidor.getMensaje());
+            return;
+        }
+        throw new ExcepcionMensajeInvalido("Estado invalido");
+    }
+    
+    public void enviaMensajePrivado(String mensaje) throws JsonProcessingException, IOException{
+        Mensajes mensajeCliente=MensajesServidorCliente.conTipoUsuarioMensaje(mensaje);
+        salida.writeUTF(serializaMensaje(mensajeCliente));
+        String mensajeServidorSerializado=entrada.readUTF();
+        if(mensajeServidorSerializado != null || !(mensajeServidorSerializado.equals(""))){
+            Mensajes mensajeServidor=deserializaMensaje(mensajeServidorSerializado);
+            if(mensajeServidor.getTipo().equals("WARNING") && 
+                    mensajeServidor.getOperacion().equals("MESSAGE") &&
+                    mensajeServidor.getNombreUsuario().equals(mensajeCliente.getNombreUsuario()) &&
+                    mensajeServidor.getMensaje().equals("El usaurio "+mensajeCliente.getNombreUsuario()+" no existe") )
+               cliente.imprimeMensaje(mensajeServidor.getTipo()+mensajeServidor.getMensaje());
+        }
+    }
+    
+    public void enviaMensajePublico(String mensaje) throws JsonProcessingException, IOException{
+        Mensajes mensajeServidor=MensajesServidorCliente.conTipoMensaje(mensaje);
+        salida.writeUTF(serializaMensaje(mensajeServidor));
+    }
+    
+    public void creaNuevoCuarto(String mensaje) throws JsonProcessingException, IOException{
+        Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuarto(mensaje);
+        salida.writeUTF(serializaMensaje(mensajeCliente));
+        Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
+        String nombreCuarto=mensajeCliente.getNombreCuarto();
+        if(mensajeServidor.getTipo().equals("INFO") 
+                && mensajeServidor.getOperacion().equals("NEW_ROOM")
+                && mensajeServidor.getMensaje().equals("success")){
+            cliente.imprimeMensaje("Cuarto creado satisfactoriamente");
+        } else if(mensajeServidor.getTipo().equals("WARINIG")
+                && mensajeServidor.getOperacion().equals("NEW_ROOM")
+                && mensajeServidor.getNombreCuarto().equals(nombreCuarto)
+                && mensajeServidor.getMensaje().equals("El cuarto '"+nombreCuarto+" ya existe"))
+            cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
+    }
+    
+    public void unirseCuarto(String mensaje) throws JsonProcessingException, IOException{
+        Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuarto(mensaje);
+        salida.writeUTF(serializaMensaje(mensajeCliente));
+        Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
+        String nombreCuarto=mensajeCliente.getNombreCuarto();
+        if(mensajeServidor.getTipo().equals("INFO") 
+                && mensajeServidor.getOperacion().equals("JOIN_ROOM")
+                && mensajeServidor.getNombreCuarto().equals(nombreCuarto)
+                && mensajeServidor.getMensaje().equals("success")){
+            cliente.imprimeMensaje("INFO Se ha unido a la sala satisfactoraimente");
+        } else if(mensajeServidor.getTipo().equals("WARINIG")
+                && mensajeServidor.getOperacion().equals("JOIN_ROOM")
+                && mensajeServidor.getNombreCuarto().equals(nombreCuarto)){
+            cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());           
+        }
+    }
+    
+    public void recibeUsuariosCuarto(String mensaje) throws JsonProcessingException, IOException{
+        Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuarto(mensaje);
+        salida.writeUTF(serializaMensaje(mensajeCliente));
+        Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
+        String nombreCuarto=mensajeCliente.getNombreCuarto();
+        if(mensajeServidor.getTipo().equals("ROOM_USER_LIST"))
+            cliente.imprimeMensaje(mensajeServidor.getNombresUsuarios().toString());
+        else if(mensajeServidor.getTipo().equals("WARNING")
+                && mensajeServidor.getOperacion().equals("ROOM_USERS")
+                && mensajeServidor.getNombreCuarto().equals(nombreCuarto))
+            cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
+    }
+    
+    public void abandonaCuarto(String mensaje) throws JsonProcessingException, IOException{
+        Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuarto(mensaje);
+        salida.writeUTF(serializaMensaje(mensajeCliente));
+        Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
+        String nombreCuarto=mensajeCliente.getNombreCuarto();
+        if(mensajeServidor.getTipo().equals("INFO") 
+                && mensajeServidor.getOperacion().equals("LEAVE_ROOM")
+                && mensajeServidor.getNombreCuarto().equals(nombreCuarto)
+                && mensajeServidor.getMensaje().equals("success"))
+            cliente.imprimeMensaje("INFO Se ha abandoando el cuarto satisfactoriamente");
+        else if(mensajeServidor.getTipo().equals("WARNING")
+                && mensajeServidor.getOperacion().equals("LEAVE_ROOM")
+                && mensajeServidor.getNombreCuarto().equals(nombreCuarto))
+            cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
+    }
+    
+    public void invitaUsuariosCuarto(String mensaje) throws JsonProcessingException, IOException{
+        Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuartoUsuarios(mensaje);
+        salida.writeUTF(serializaMensaje(mensajeCliente));
+        Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
+        String nombreCuarto=mensajeCliente.getNombreCuarto();
+        if(mensajeServidor.getTipo().equals("INFO") 
+                && mensajeServidor.getOperacion().equals("INVITE")
+                && mensajeServidor.getNombreCuarto().equals(nombreCuarto)
+                && mensajeServidor.getMensaje().equals("success"))
+            cliente.imprimeMensaje("INFO Se ha invitado a todos los usuarios al cuarto satisfactoriamente");
+        else if(mensajeServidor.getTipo().equals("WARNING")
+                && mensajeServidor.getOperacion().equals("INVITE")){
+                cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
+        }
+    }
+    
+    public void enviaMensajeCuarto(String mensaje) throws JsonProcessingException, IOException{
+        Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuartoMensaje(mensaje);
+        salida.writeUTF(serializaMensaje(mensajeCliente));
+        Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
+        String nombreCuarto=mensajeCliente.getNombreCuarto();
+        if(mensajeServidor.getTipo().equals("WARNING") 
+                && mensajeServidor.getOperacion().equals("ROOM_MESSAGE")
+                && mensajeServidor.getNombreCuarto().equals(nombreCuarto))
+            cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
     }
 }

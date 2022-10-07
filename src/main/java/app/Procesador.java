@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.ServerSocket;
 
 public abstract class Procesador extends Thread {
@@ -27,4 +28,6 @@ public abstract class Procesador extends Thread {
         }
         return new ObjectMapper().readValue(mensaje, Mensajes.class);
     }
+    
+    public void menuMensajes(String mensaje) throws IOException {}
 }
