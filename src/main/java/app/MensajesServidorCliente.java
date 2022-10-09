@@ -77,8 +77,9 @@ public class MensajesServidorCliente {
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
+        mensaje="";
         for(int i=2; i < argumentosMensaje.length; i++)
-            mensaje+=argumentosMensaje[i];
+                mensaje+=argumentosMensaje[i]+" ";
         if(operacion == TiposMensaje.INVALID)
             throw new ExcepcionMensajeInvalido();
         return constructor.conTipo(tipo.toString())
@@ -162,14 +163,10 @@ public class MensajesServidorCliente {
         
     }
 
-    public static Mensajes conTipoUsuarios(String mensaje){
+    public static Mensajes conTipoUsuarios(String mensaje, String[] usuarios){
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
-        String[] usuarios=new String[argumentosMensaje.length-1];
-        for(int i=1; i < argumentosMensaje.length; i++){
-            usuarios[i]=argumentosMensaje[i];
-        }
         if(operacion == TiposMensaje.INVALID)
             throw new ExcepcionMensajeInvalido();
         return constructor.conTipo(operacion.toString())

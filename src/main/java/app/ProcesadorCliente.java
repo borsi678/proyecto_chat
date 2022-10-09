@@ -9,23 +9,19 @@ import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import app.ExcepcionMensajeInvalido;
-import javax.imageio.IIOException;
 
 public class ProcesadorCliente extends Procesador{
     
     private Cliente cliente;
-    private Socket socket;
     
     public ProcesadorCliente(){
         this.cliente=null;
         this.entrada=null;
         this.salida=null;
-        this.socket=null;
     }
     
-    public ProcesadorCliente(Cliente cliente, Socket socket) throws IOException, ExcepcionMensajeInvalido{
+    public ProcesadorCliente(Cliente cliente, Socket socket) throws IOException{
         this.cliente=cliente;
-        this.socket=socket;
         this.entrada=new DataInputStream(socket.getInputStream());
         this.salida=new DataOutputStream(socket.getOutputStream());
     }
@@ -68,6 +64,7 @@ public class ProcesadorCliente extends Procesador{
             try {
                 mensajeServidor=entrada.readUTF();
                 mensaje=deserializaMensaje(mensajeServidor);
+                mensajesRecibidos(mensaje);
             } catch (IOException ex) {
                 Logger.getLogger(ProcesadorCliente.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -113,6 +110,56 @@ public class ProcesadorCliente extends Procesador{
             salida.writeUTF(serializaMensaje(mensajeCliente));
         }
             
+    }
+    
+    public void mensajesRecibidos(Mensajes mensaje){
+        if(mensaje.getTipo().equals("NEW_USER"))
+            cliente.imprimeMensaje("INFO Se ha conectado al servidor el usuario: "+mensaje.getNombreUsuario());
+        else if(mensaje.getTipo().equals("NEW_STATUS"))
+            cliente.imprimeMensaje("INFO El usuario '"+mensaje.getNombreUsuario()+
+                    "' ha cambiado el estado a "+mensaje.getEstado());
+        else if(mensaje.getTipo().equals("USER_LIST"))
+            cliente.imprimeMensaje("[General] Lista de usuarios conectados: "
+                    +mensaje.getNombresUsuarios().toString());
+        else if(mensaje.getTipo().equals("ROOM_USER_LIST")){
+            String mensajeImprimir=String.format("[%s] Lista de usuarios conectados a la sala: %s"
+                    , mensaje.getNombreCuarto(), mensaje.getNombresUsuarios().toString());
+            cliente.imprimeMensaje(mensajeImprimir);
+        }
+        else if(mensaje.getTipo().equals("MESSAGE_FROM")){
+            String mensajeImprimir=String.format("[Mensaje Privado][%s] %s", mensaje.getNombreUsuario()
+            , mensaje.getMensaje());
+            cliente.imprimeMensaje(mensajeImprimir);
+        }
+        else if(mensaje.getTipo().equals("PUBLIC_MESSAGE_FROM")){
+            String mensajeImprimir=String.format("[General][%s] %s", mensaje.getNombreUsuario()
+            , mensaje.getMensaje());
+            cliente.imprimeMensaje(mensajeImprimir);
+        }
+        else if(mensaje.getTipo().equals("INVITATION")){
+            String mensajeImprimir=String.format("[Invitacion] %s", mensaje.getMensaje());
+            cliente.imprimeMensaje(mensajeImprimir);
+        }
+        else if(mensaje.getTipo().equals("JOINED_ROOM")){
+            String mensajeImprimir=String.format("[%s] El usuario '%s' se ha unido a la sala.", 
+                    mensaje.getNombreCuarto(),mensaje.getNombreUsuario());
+            cliente.imprimeMensaje(mensajeImprimir);
+        }
+        else if(mensaje.getTipo().equals("ROOM_MESSAGE_FROM")){
+            String mensajeImprimir=String.format("[%s][%s] %s", mensaje.getNombreCuarto(),
+                    mensaje.getNombreUsuario(), mensaje.getMensaje());
+            cliente.imprimeMensaje(mensajeImprimir);
+        }       
+        else if(mensaje.getTipo().equals("LEFT_ROOM")){
+            String mensajeImprimir=String.format("[%s] El usuario ' %s' a salido del cuarto", 
+                    mensaje.getNombreCuarto(), mensaje.getMensaje());
+            cliente.imprimeMensaje(mensajeImprimir);
+        }        
+        else if(mensaje.getTipo().equals("DISCONNECTED")){
+            String mensajeImprimir=String.format("[General] El usuario ' %s' a salido del cuarto", 
+                    mensaje.getNombreUsuario());
+            cliente.imprimeMensaje(mensajeImprimir);
+        }
     }
     
     public void recibeListaUsuariosServidor(String tipo) throws JsonProcessingException, IOException{

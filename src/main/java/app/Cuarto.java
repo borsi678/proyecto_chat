@@ -19,6 +19,7 @@ public class Cuarto {
         this.nombre = nombre;
         this.usuarioCreador = usuarioCreador;        
         this.usuariosUnidos = new LinkedList<Usuario>();
+        this.usuariosUnidos.add(usuarioCreador);
         this.usuariosInvitados = new LinkedList<Usuario>();
     }
     

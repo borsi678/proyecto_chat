@@ -30,4 +30,6 @@ public abstract class Procesador extends Thread {
     }
     
     public void menuMensajes(String mensaje) throws IOException {}
+    
+    public void mensajesRecibidos(Mensajes mensaje){}
 }

@@ -5,22 +5,20 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class Servidor {
 
-    private LinkedList<Usuario> listaUsuarios;
     private LinkedList<Cuarto> listaCuartos;
-    private LinkedList<Socket> listaSockets;
+    private HashMap<Usuario,Socket> diccSocketsUsuarios;
 
     public Servidor() {
-        this.listaUsuarios = new LinkedList<Usuario>();
         this.listaCuartos = new LinkedList<Cuarto>();
         this.listaCuartos.add(new Cuarto("General"));
-        this.listaSockets = new LinkedList<Socket>();
+        this.diccSocketsUsuarios = new HashMap<Usuario,Socket>();
     }
 
     public void iniciaServidor() {
@@ -53,32 +51,109 @@ public class Servidor {
     }
 
 
-    public void agregaUsuario(Usuario usuario) {
-        listaUsuarios.add(usuario);
-    }
-
     public void agregaCuarto(Cuarto cuarto) {
         listaCuartos.add(cuarto);
     }
 
-    public void agregaSocketCliente(Socket socketCliente) {
-        this.listaSockets.add(socketCliente);
+    public void agregaSocketCliente(Usuario usuario,Socket socketCliente) {
+        this.diccSocketsUsuarios.put(usuario, socketCliente);
     }
 
     public boolean contieneUsuario(Usuario usuario) {
-        for (Usuario usuarioServidor : listaUsuarios) {
-            if (usuarioServidor.getNombre().equals(usuario.getNombre())) {
+        for (Map.Entry<Usuario,Socket> entrada : diccSocketsUsuarios.entrySet()) {
+            if(entrada.getKey().equals(usuario))
                 return true;
-            }
+        }
+        return false;
+    }
+    
+    public boolean contieneUsuario(String nombreUsuario) {
+        for (Map.Entry<Usuario,Socket> entrada : diccSocketsUsuarios.entrySet()) {
+            if(entrada.getKey().getNombre().equals(nombreUsuario))
+                return true;
         }
         return false;
     }
 
     public void transmiteMensajeClientes(String mensaje) throws IOException {
         DataOutputStream salida;
-        for (Socket clienteConectado : listaSockets) {
+        Socket clienteConectado;
+        for (Map.Entry<Usuario,Socket> entrada : diccSocketsUsuarios.entrySet()) {
+            clienteConectado=entrada.getValue();
             salida = new DataOutputStream(clienteConectado.getOutputStream());
             salida.writeUTF(mensaje);
         }
+    }
+    
+    public void transmiteMensajeClientes(String mensaje, String nombreUsuario) throws IOException {
+        DataOutputStream salida;
+        Socket clienteConectado;
+        Usuario usuarioConectado;
+        for (Map.Entry<Usuario,Socket> entrada : diccSocketsUsuarios.entrySet()) {
+            usuarioConectado=entrada.getKey();
+            if(usuarioConectado.getNombre().equals(nombreUsuario))
+                continue;
+            clienteConectado=entrada.getValue();
+            salida = new DataOutputStream(clienteConectado.getOutputStream());
+            salida.writeUTF(mensaje);
+        }
+    }
+
+    public void transmiteMensajePrivado(String mensaje, Usuario usuario) throws IOException{
+        Socket clienteConectado = diccSocketsUsuarios.get(usuario);
+        DataOutputStream salida=new DataOutputStream(clienteConectado.getOutputStream());
+        salida.writeUTF(mensaje);
+
+    }
+    
+    public void cambiaEstadoUsuario(String nombreUsuario, EstadoUsuario estado){
+        Usuario usuario;
+        for (Map.Entry<Usuario,Socket> entrada : diccSocketsUsuarios.entrySet()) {
+            usuario=entrada.getKey();
+            if(usuario.getNombre().equals(nombreUsuario))
+                usuario.setEstado(estado);
+        }
+    }
+    
+    public Usuario getUsuario(Socket socketCliente){
+        for (Map.Entry<Usuario,Socket> entrada : diccSocketsUsuarios.entrySet()) {
+            if(entrada.getValue().equals(socketCliente))
+                return entrada.getKey();
+        }
+        return null;
+    }
+    
+    public Usuario getUsuario(String nombreUsuario){
+        for (Map.Entry<Usuario,Socket> entrada : diccSocketsUsuarios.entrySet()) {
+            if(entrada.getKey().getNombre().equals(nombreUsuario))
+                return entrada.getKey();
+        }
+        return null;
+    }
+    
+    public Socket getSocketCliente(Usuario usuario){
+        return diccSocketsUsuarios.get(usuario);
+    }
+    
+    public String[] getListaUsuariosConectados(){
+        String[] lista=new String[diccSocketsUsuarios.size()];
+        int contador=0;
+        for (Map.Entry<Usuario,Socket> entrada : diccSocketsUsuarios.entrySet()) {
+            lista[contador++]=entrada.getKey().getNombre();
+        }
+        return lista;
+    }
+    
+    public void creaCuarto(String nombreCuarto, Usuario usuarioCreador){
+        Cuarto cuarto= new Cuarto(nombreCuarto, usuarioCreador);
+        listaCuartos.add(cuarto);
+    }
+    
+    public boolean contieneCuarto(String nombreCuartor){
+        for(Cuarto cuarto : listaCuartos){
+            if(cuarto.getNombre().equals(nombreCuartor))
+                return true;
+        }
+        return false;
     }
 }
