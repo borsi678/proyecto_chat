@@ -98,6 +98,20 @@ public class Servidor {
             salida.writeUTF(mensaje);
         }
     }
+    
+    public void transmiteMensajeACuarto(String mensaje, String nombreCuarto) throws IOException{
+        DataOutputStream salida;
+        Socket clienteConectado;
+        for(Cuarto cuarto : listaCuartos){
+            if(cuarto.getNombre().equals(nombreCuarto)){
+                LinkedList<Usuario> usuariosUnidos=cuarto.getUsuariosUnidos();
+                for(Usuario usuarioConectado : usuariosUnidos){
+                    transmiteMensajePrivado(mensaje, usuarioConectado);
+                }
+                return;
+            }
+        }
+    }
 
     public void transmiteMensajePrivado(String mensaje, Usuario usuario) throws IOException{
         Socket clienteConectado = diccSocketsUsuarios.get(usuario);
@@ -155,5 +169,68 @@ public class Servidor {
                 return true;
         }
         return false;
+    }
+    
+    public void agregaUsuarioInvitadoACuarto(Usuario usuario, String nombreCuarto){
+        for(Cuarto cuarto : listaCuartos){
+            if(cuarto.getNombre().equals(nombreCuarto)){
+                cuarto.agregaUsuarioInvitado(usuario);
+            }
+        }
+    }
+    
+    public void agregaUsuarioUnidoACuarto(Usuario usuario, String nombreCuarto){
+        for(Cuarto cuarto : listaCuartos){
+            if(cuarto.getNombre().equals(nombreCuarto)){
+                cuarto.agregaUsuarioUnido(usuario);
+            }
+        }
+    }
+    
+    public void eliminaUsuarioInvitadoACuarto(Usuario usuario, String nombreCuarto){
+        for(Cuarto cuarto : listaCuartos){
+            if(cuarto.getNombre().equals(nombreCuarto)){
+                cuarto.eliminaUsuarioInvitado(usuario);
+            }
+        }
+    }
+    
+    public void eliminaUsuarioUnidoACuarto(Usuario usuario, String nombreCuarto){
+        for(Cuarto cuarto : listaCuartos){
+            if(cuarto.getNombre().equals(nombreCuarto)){
+                cuarto.eliminaUsuarioUnido(usuario);
+            }
+        }
+    }
+    
+    public boolean estaUsuarioInvitadoACuarto(Usuario usuario, String nombreCuarto){
+        for(Cuarto cuarto : listaCuartos){
+            if(cuarto.getNombre().equals(nombreCuarto)){
+                return cuarto.estaUsuarioInvitado(usuario);
+            }
+        }
+        return false;
+    }
+    
+    public boolean estaUsuarioUnidoACuarto(Usuario usuario, String nombreCuarto){
+        for(Cuarto cuarto : listaCuartos){
+            if(cuarto.getNombre().equals(nombreCuarto)){
+                return cuarto.estaUsuarioUnido(usuario);
+            }
+        }
+        return false;
+    }
+    
+    public LinkedList<Usuario> getListaUsuariosCuarto(String nombreCuarto){
+        for(Cuarto cuarto : listaCuartos){
+            if(cuarto.getNombre().equals(nombreCuarto)){
+                return cuarto.getUsuariosUnidos();
+            }
+        }
+        return null;
+    }
+    
+    public LinkedList<Cuarto> getListaCuartosServidor(){
+        return listaCuartos;
     }
 }

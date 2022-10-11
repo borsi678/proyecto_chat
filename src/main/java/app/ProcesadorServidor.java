@@ -5,6 +5,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -14,7 +15,9 @@ public class ProcesadorServidor extends Procesador {
 
     private Servidor servidor;
     private Socket socketCliente;
-
+    private Usuario usuarioCliente;
+    private boolean salir=true;
+    
     public ProcesadorServidor(Servidor servidor, Socket socketCliente) throws IOException {
         this.servidor = servidor;
         this.socketCliente = socketCliente;
@@ -40,7 +43,7 @@ public class ProcesadorServidor extends Procesador {
             throw new ExcepcionMensajeInvalido("Mensaje con el formato incorrecto");
         }
         Mensajes mensajeCliente = deserializaMensaje(nombreCliente);
-        Usuario usuarioCliente = new Usuario(mensajeCliente.getNombreUsuario());
+        usuarioCliente = new Usuario(mensajeCliente.getNombreUsuario());
         if (servidor.contieneUsuario(usuarioCliente)) {
             String mensajeConvertir = "IDENTIFY " + usuarioCliente.getNombre() + " El usuario \'"
                     + usuarioCliente.getNombre() + "\' ya existe";
@@ -60,7 +63,7 @@ public class ProcesadorServidor extends Procesador {
     public void recibeMensajesCliente() {
         String mensajeClienteSerializado = "";
         Mensajes mensajeCliente;
-        while (true) {
+        while (salir) {
             try {
                 mensajeClienteSerializado = entrada.readUTF();
                 mensajeCliente = deserializaMensaje(mensajeClienteSerializado);
@@ -84,8 +87,20 @@ public class ProcesadorServidor extends Procesador {
                 mensajePublico(mensaje);
             else if(mensaje.getTipo().equals("NEW_ROOM"))
                 nuevoCuarto(mensaje);
+            else if(mensaje.getTipo().equals("INVITE"))
+                invitaUsuarios(mensaje);
+            else if(mensaje.getTipo().equals("JOIN_ROOM"))
+                unirseSala(mensaje);
+            else if(mensaje.getTipo().equals("ROOM_USERS"))
+                usuariosCuarto(mensaje);
+            else if(mensaje.getTipo().equals("ROOM_MESSAGE"))
+                cuartoMensaje(mensaje);
+            else if(mensaje.getTipo().equals("LEAVE_ROOM"))
+                abandonaCuarto(mensaje);
+            else if(mensaje.getTipo().equals("DISCONNECT"))
+                desconectaUsuario();
         } catch (IOException ex) {
-            Logger.getLogger(ProcesadorServidor.class.getName()).log(Level.SEVERE, null, ex);
+
         }
     }
 
@@ -152,5 +167,174 @@ public class ProcesadorServidor extends Procesador {
         Mensajes mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar, 
                 TiposMensaje.WARNING);
         salida.writeUTF(serializaMensaje(mensajeServidor));
+    }
+    
+    public void invitaUsuarios(Mensajes mensaje) throws JsonProcessingException, IOException{
+        LinkedList<Mensajes> invitaciones=new LinkedList<Mensajes>();
+        String [] usuariosInvitar=mensaje.getNombresUsuarios();
+        String nombreCuarto=mensaje.getNombreCuarto();
+        Mensajes mensajeServidor;
+        String mensajeEnviar;        
+        if(servidor.contieneCuarto(nombreCuarto)){
+            for(String usuarioContenido : usuariosInvitar){ //Checamos si no existe algun usuario para invitar
+                if(!(servidor.contieneUsuario(usuarioContenido))){
+                    mensajeEnviar= String.format("INVITE %s El usuario '%s' no existe",usuarioContenido);
+                    mensajeServidor=MensajesServidorCliente.conTIpoMensajeOperacionUsuario(mensajeEnviar, 
+                            TiposMensaje.WARNING);
+                    salida.writeUTF(serializaMensaje(mensajeServidor));
+                    return;
+                }
+            }
+            mensajeEnviar=String.format("INVITATION %s %s % te invita al cuarto '%s'", usuarioCliente.getNombre()
+            , nombreCuarto, usuarioCliente.getNombre(), nombreCuarto);
+            mensajeServidor=MensajesServidorCliente.conTipoMensajeUsuarioNombreCuarto(mensajeEnviar);
+            Usuario usuarioInvitado;
+            for(String usuarioContenido : usuariosInvitar){ //Si todos los usuarios existen procedemos a enviarles el mensaje
+                // y agregarlos al cuarto
+                usuarioInvitado=servidor.getUsuario(usuarioContenido);
+                servidor.agregaUsuarioInvitadoACuarto(usuarioInvitado, nombreCuarto);
+                servidor.transmiteMensajePrivado(serializaMensaje(mensajeServidor), usuarioInvitado);
+            }
+            mensajeEnviar=String.format("INVITE %s success", nombreCuarto);
+            mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar,
+                    TiposMensaje.INFO);
+            salida.writeUTF(serializaMensaje(mensajeServidor));
+            return;
+        }
+        mensajeEnviar=String.format("INVITE %s El cuarto '%s' no existe", nombreCuarto);
+        mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar, 
+                TiposMensaje.WARNING);
+    }
+    
+    public void unirseSala(Mensajes mensaje) throws JsonProcessingException, IOException{
+        String nombreCuarto=mensaje.getNombreCuarto();
+        Mensajes mensajeServidor;
+        String mensajeEnviar;
+        if(servidor.contieneCuarto(nombreCuarto) && servidor.estaUsuarioInvitadoACuarto(usuarioCliente, 
+                nombreCuarto)){
+            if(!(servidor.estaUsuarioInvitadoACuarto(usuarioCliente, nombreCuarto))){
+                mensajeEnviar=String.format("JOIN_ROOM %s El usuario no ha sido invitado al cuarto", nombreCuarto);
+                mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar, 
+                        TiposMensaje.WARNING);
+                salida.writeUTF(serializaMensaje(mensajeServidor));
+                return;
+            } else if(servidor.estaUsuarioUnidoACuarto(usuarioCliente, nombreCuarto)){
+                mensajeEnviar=String.format("JOIN_ROOM %s El usuario ya se unio al cuarto '%s'", nombreCuarto);
+                mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar, 
+                        TiposMensaje.WARNING);
+                salida.writeUTF(serializaMensaje(mensajeServidor));
+                return;
+            }
+            servidor.eliminaUsuarioInvitadoACuarto(usuarioCliente, nombreCuarto);
+            mensajeEnviar=String.format("JOINED_ROOM %s  %s" , nombreCuarto, usuarioCliente.getNombre());
+            mensajeServidor=MensajesServidorCliente.conTipoNombreCuartoUsuario(mensajeEnviar);
+            servidor.transmiteMensajeACuarto(serializaMensaje(mensajeServidor), nombreCuarto);
+            servidor.agregaUsuarioUnidoACuarto(usuarioCliente, nombreCuarto);
+            mensajeEnviar=String.format("JOIN_ROOM %s success", nombreCuarto);
+            mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar,
+                    TiposMensaje.INFO);
+            return;
+        }
+        mensajeEnviar=String.format("JOIN_ROOM %s El cuarto '%s' no existe", nombreCuarto);
+        mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar
+                , TiposMensaje.WARNING);
+        salida.writeUTF(serializaMensaje(mensajeServidor));
+    }
+    
+    public void usuariosCuarto(Mensajes mensaje) throws JsonProcessingException, IOException{
+        String nombreCuarto= mensaje.getNombreCuarto();
+        String mensajeEnviar;
+        Mensajes mensajeServidor;
+        if(servidor.contieneCuarto(nombreCuarto) && servidor.estaUsuarioUnidoACuarto(usuarioCliente,
+                nombreCuarto)){
+            LinkedList<Usuario> listaUsuariosCuarto=servidor.getListaUsuariosCuarto(nombreCuarto);
+            String[] usuariosCuarto=new String[listaUsuariosCuarto.size()];
+            int contador=0;
+            for(Usuario usuario : listaUsuariosCuarto){
+                usuariosCuarto[contador]=usuario.getNombre();
+            }
+            mensajeServidor= MensajesServidorCliente.conTipoUsuarios("ROOM_USER_LIST", usuariosCuarto);
+            salida.writeUTF(serializaMensaje(mensajeServidor));
+        } else if(!(servidor.contieneCuarto(nombreCuarto))){
+            mensajeEnviar= String.format("ROOM_USERS %s El cuarto '%s' no existe",nombreCuarto);
+            mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar,
+                    TiposMensaje.WARNING);
+            salida.writeUTF(serializaMensaje(mensajeServidor));
+        } else {
+            mensajeEnviar=String.format("ROOM_USERS %s EL usuario no se ha unido al cuarto '%s'", nombreCuarto);
+            mensajeServidor= MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar,
+                    TiposMensaje.WARNING);
+            salida.writeUTF(serializaMensaje(mensajeServidor));
+        }
+        
+    }
+    
+    public void cuartoMensaje(Mensajes mensaje) throws JsonProcessingException, IOException{
+        String nombreCuarto= mensaje.getNombreCuarto();
+        String mensajeEnviar;
+        Mensajes mensajeServidor;
+        if(servidor.contieneCuarto(nombreCuarto) && servidor.estaUsuarioUnidoACuarto(usuarioCliente,
+                nombreCuarto)){
+            mensajeEnviar= String.format("ROOM_MESSAGE_FROM %s %s %s", nombreCuarto, usuarioCliente.getNombre(),
+                    mensaje.getMensaje());
+            mensajeServidor = MensajesServidorCliente.conTipoNombreCuartoUsuarioMensaje(mensajeEnviar);
+            servidor.transmiteMensajeACuarto(serializaMensaje(mensajeServidor), nombreCuarto);
+        }else if(!(servidor.contieneCuarto(nombreCuarto))){
+            mensajeEnviar= String.format("ROOM_MESSAGE %s El cuarto '%s' no existe",nombreCuarto);
+            mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar,
+                    TiposMensaje.WARNING);
+            salida.writeUTF(serializaMensaje(mensajeServidor));
+        } else {
+            mensajeEnviar=String.format("ROOM_MESSAGE %s EL usuario no se ha unido al cuarto '%s'", nombreCuarto);
+            mensajeServidor= MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar,
+                    TiposMensaje.WARNING);
+            salida.writeUTF(serializaMensaje(mensajeServidor));
+        }
+    }
+    
+    public void abandonaCuarto(Mensajes mensaje) throws JsonProcessingException, IOException{
+        String nombreCuarto= mensaje.getNombreCuarto();
+        String mensajeEnviar;
+        Mensajes mensajeServidor;
+        if(servidor.contieneCuarto(nombreCuarto) && servidor.estaUsuarioUnidoACuarto(usuarioCliente,
+                nombreCuarto)){
+            servidor.eliminaUsuarioUnidoACuarto(usuarioCliente, nombreCuarto);
+            mensajeEnviar=String.format("LEAVE_ROOM %s success", nombreCuarto);
+            mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar,
+                    TiposMensaje.INFO);
+            salida.writeUTF(serializaMensaje(mensajeServidor));
+            mensajeEnviar=String.format("LEFT_ROOM %s %s ", nombreCuarto, usuarioCliente.getNombre());
+            mensajeServidor=MensajesServidorCliente.conTipoNombreCuartoUsuario(mensajeEnviar);
+            servidor.transmiteMensajeACuarto(serializaMensaje(mensajeServidor), nombreCuarto);
+        }else if(!(servidor.contieneCuarto(nombreCuarto))){
+            mensajeEnviar= String.format("LEAVE_ROOM %s El cuarto '%s' no existe",nombreCuarto);
+            mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar,
+                    TiposMensaje.WARNING);
+            salida.writeUTF(serializaMensaje(mensajeServidor));
+        } else {
+            mensajeEnviar=String.format("LEAVE_ROOM %s EL usuario no se ha unido al cuarto '%s'", nombreCuarto);
+            mensajeServidor= MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar,
+                    TiposMensaje.WARNING);
+            salida.writeUTF(serializaMensaje(mensajeServidor));
+        }
+    }
+    
+    public void desconectaUsuario() throws JsonProcessingException, IOException{
+        String mensajeEnviar=String.format("DISCONNECTED %s", usuarioCliente.getNombre());
+        Mensajes mensajeServidor= MensajesServidorCliente.conTipoUsuario(mensajeEnviar);
+        salida.writeUTF(serializaMensaje(mensajeServidor));
+        LinkedList<Cuarto> listaCuartos=servidor.getListaCuartosServidor();
+        mensajeEnviar=String.format("LEFT_ROOM %s ", usuarioCliente.getNombre());
+        mensajeServidor = MensajesServidorCliente.conTipoUsuario(mensajeEnviar);
+        String nombreCuarto;
+        for(Cuarto cuarto : listaCuartos){
+            if(cuarto.estaUsuarioUnido(usuarioCliente)){
+                nombreCuarto=cuarto.getNombre();
+                mensajeServidor.setNombreCuarto(nombreCuarto);
+                servidor.eliminaUsuarioUnidoACuarto(usuarioCliente, nombreCuarto);
+                servidor.transmiteMensajeACuarto(serializaMensaje(mensajeServidor), nombreCuarto);
+            }
+        }
+        salir=false;
     }
 }

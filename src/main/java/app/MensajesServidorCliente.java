@@ -99,8 +99,9 @@ public class MensajesServidorCliente {
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
+        mensaje="";
         for(int i=2; i < argumentosMensaje.length; i++)
-            mensaje+=argumentosMensaje[i];
+            mensaje+=argumentosMensaje[i]+" ";
         if(operacion == TiposMensaje.INVALID)
             throw new ExcepcionMensajeInvalido();
         return constructor.conTipo(operacion.toString())
@@ -113,8 +114,9 @@ public class MensajesServidorCliente {
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
+        mensaje="";
         for (int i = 1; i < argumentosMensaje.length; i++) {
-            mensaje += argumentosMensaje[i];
+            mensaje += argumentosMensaje[i]+" ";
         }
         if (operacion == TiposMensaje.INVALID) {
             throw new ExcepcionMensajeInvalido();
@@ -139,8 +141,9 @@ public class MensajesServidorCliente {
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
+        mensaje="";
         for(int i=3; i < argumentosMensaje.length; i++)
-            mensaje+=argumentosMensaje[i];
+            mensaje+=argumentosMensaje[i]+" ";
         if(operacion == TiposMensaje.INVALID)
             throw new ExcepcionMensajeInvalido();
         return constructor.conTipo(operacion.toString())
@@ -178,8 +181,9 @@ public class MensajesServidorCliente {
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
+        mensaje="";
         for(int i=2; i < argumentosMensaje.length; i++)
-            mensaje+=argumentosMensaje[i];
+            mensaje+=argumentosMensaje[i]+" ";
         if(operacion == TiposMensaje.INVALID)
             throw new ExcepcionMensajeInvalido();
         return constructor.conTipo(operacion.toString())
@@ -192,8 +196,9 @@ public class MensajesServidorCliente {
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
+        mensaje="";
         for(int i=2; i < argumentosMensaje.length; i++)
-            mensaje+=argumentosMensaje[i];
+            mensaje+=argumentosMensaje[i]+" ";
         if(operacion == TiposMensaje.INVALID || tipo == TiposMensaje.INVALID)
             throw new ExcepcionMensajeInvalido();
         return constructor.conTipo(tipo.toString())
@@ -222,8 +227,9 @@ public class MensajesServidorCliente {
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaAMensaje(argumentosMensaje[0]);
+        mensaje="";
         for(int i=3; i < argumentosMensaje.length; i++)
-            mensaje+=argumentosMensaje[i];
+            mensaje+=argumentosMensaje[i]+" ";
         if(operacion == TiposMensaje.INVALID)
             throw new ExcepcionMensajeInvalido();
         return constructor.conTipo(operacion.toString())
