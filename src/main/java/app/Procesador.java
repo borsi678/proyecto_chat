@@ -13,12 +13,16 @@ public abstract class Procesador extends Thread {
     protected DataInputStream entrada;
     protected DataOutputStream salida;
     
-    public String serializaMensaje(Mensajes mensaje) throws JsonProcessingException{
-        ObjectMapper mapeador = new ObjectMapper();
-        return mapeador.writeValueAsString(mensaje);
+    public String serializaMensaje(Mensajes mensaje) throws ExcepcionSerializa{
+        try{
+            ObjectMapper mapeador = new ObjectMapper();
+            return mapeador.writeValueAsString(mensaje);
+        }catch(JsonProcessingException ex){
+            throw new ExcepcionSerializa("Error al serializar mensaje: "+mensaje.toString());
+        }
     }
     
-    public Mensajes deserializaMensaje(String mensaje) throws JsonProcessingException{
+    public Mensajes deserializaMensaje(String mensaje) throws ExcepcionDeserializa{
         String[] contenidoMensaje={"type", "message", "operation", "username", "roomname", "status", 
             "usernames"};
         for(String elemento : contenidoMensaje){
@@ -26,7 +30,11 @@ public abstract class Procesador extends Thread {
                 mensaje+=String.format("%s: \"\"",elemento);
             }
         }
-        return new ObjectMapper().readValue(mensaje, Mensajes.class);
+        try{
+            return new ObjectMapper().readValue(mensaje, Mensajes.class);
+        }catch(JsonProcessingException ex){
+            throw new ExcepcionDeserializa("Error al deserailizar mensaje "+mensaje);
+        }
     }
     
     public void menuMensajes(String mensaje) throws IOException {}

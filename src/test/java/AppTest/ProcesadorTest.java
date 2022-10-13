@@ -23,14 +23,14 @@ public class ProcesadorTest {
     public void testSerializaMensaje() throws JsonProcessingException  {
         ConstructorMensajes mensajeC = new ConstructorMensajes();
         procesador= new ProcesadorCliente();
-        String[] nombres={"Uno", "Dos", "tres"};
+        String[] nombres={"Uno", "Dos", "Tres"};
         Mensajes mensaje=mensajeC.conTipo(" IDENTIFY")
                                 .conNombreUsuario(" Angel")
                                 .conNombresUsuarios(nombres)
                                 .construyeMensaje();
-        String mensajePrueba="{\"type\": \"IDENTIFY\", \"username\": \"Angel\"}";
+        String mensajePrueba="{\"type\":\"IDENTIFY\",\"username\":\"Angel\",\"usernames\":[ \"Uno\",\"Dos\",\"Tres\"]}";
         String mensajeComparar= procesador.serializaMensaje(mensaje); 
-//        assertEquals(mensajePrueba, mensajeComparar);                       
+        assertEquals(mensajePrueba, mensajeComparar);                       
 
     }
 
@@ -39,7 +39,7 @@ public class ProcesadorTest {
      */
     @Test
     public void testDeserializaMensaje() throws JsonProcessingException  {
-        String mensajePrueba="{\"type\": \"IDENTIFY\", \"username\": \"Angel\"}";
+        String mensajePrueba="{\"type\":\"IDENTIFY\",\"username\":\"Angel\"}";
         ConstructorMensajes mensajeC = new ConstructorMensajes();
         procesador= new ProcesadorCliente();
         Mensajes mensaje=mensajeC.conTipo("IDENTIFY")
@@ -47,6 +47,16 @@ public class ProcesadorTest {
                                 .construyeMensaje();
         Mensajes mensajeComparar = procesador.deserializaMensaje(mensajePrueba);
 //        assertEquals(mensaje, mensajeComparar);            
+        mensajePrueba="{\"type\":\"IDENTIFY\",\"username\":\"Angel\",\"usernames\":[ \"Uno\",\"Dos\",\"Tres\"]}";
+        String[] usuarios={"Uno", "Dos", "Tres"};
+        mensaje.setNombresUsuarios(usuarios);
+        mensajeComparar=procesador.deserializaMensaje(mensajePrueba);
+//        assertEquals(mensaje, mensajeComparar);
+        mensajePrueba="{\"type\":\"IDENTIFY\",\"username\":\"Angel\",\"usernames\":[ \"Uno\",\"Dos\",\"Tres\"],"+
+                "\"status\":\"ACTIVE\"}";
+        mensaje.setEstado("ACTIVE");
+        mensajeComparar=procesador.deserializaMensaje(mensajePrueba);
+        
     }
 
 

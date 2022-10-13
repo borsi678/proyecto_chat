@@ -99,9 +99,25 @@ public class Mensajes {
         this.nombreCuarto=nombreCuarto;
     }
     
+    public String usuariosToString(){
+        String arregloCadena= "[";
+        if(nombresUsuarios == null || nombresUsuarios.length==0){
+            return "[]";
+        }
+        for(int i=0; i<nombresUsuarios.length; i++){
+            if(i==nombresUsuarios.length-1){
+                arregloCadena+=String.format("%s]", nombresUsuarios[i]);
+                continue;
+            }
+            arregloCadena+=String.format("% , ",nombresUsuarios[i]);
+        }
+        return arregloCadena;
+    }
+    
     @Override
     public String toString(){
-        return String.format("TIpo : %s,Operacion: %s, Usuario: %s , Nombre Sala : %s, Usuarios: %s EStado: %s, Mensaje: %s", this.tipo, this.operacion, this.nombreUsuario, this.nombreCuarto, this.nombresUsuarios, this.estado, this.mensaje );
+        return String.format("TIpo : %s,Operacion: %s, Usuario: %s , Nombre Sala : %s, Usuarios: %s Estado: %s, Mensaje: %s", 
+                this.tipo, this.operacion, this.nombreUsuario, this.nombreCuarto, usuariosToString() , this.estado, this.mensaje );
     }
     public boolean estadoValido() throws ExcepcionMensajeInvalido{
         if(this.tipo == null || this.tipo.equals(""))
@@ -109,6 +125,73 @@ public class Mensajes {
         return true;
     }
     
+    @Override
+    public boolean equals(Object obj){
+        if(obj==null)
+            return false;
+        if(this==obj )
+            return true;
+        if(!(obj instanceof Mensajes))
+            return false;
+        
+        Mensajes mensajeComparar=(Mensajes) obj;
+        if((this.tipo== null && mensajeComparar.tipo!=null) 
+                || (this.tipo!= null && mensajeComparar.tipo==null))
+            return false;
+        if(this.tipo != null && mensajeComparar.tipo != null){
+           if(!(this.tipo.equals(mensajeComparar.tipo)))
+               return false;
+        }
+        
+        if((this.mensaje== null && mensajeComparar.mensaje!=null)
+                || (this.mensaje!= null && mensajeComparar.mensaje==null))
+            return false;
+        if(this.mensaje != null && mensajeComparar.mensaje != null ){
+                   if(!(this.mensaje.equals(mensajeComparar.mensaje)))
+                       return false;
+        }
+        
+        if((this.operacion== null && mensajeComparar.operacion!=null) 
+                || (this.operacion!= null && mensajeComparar.operacion==null))
+            return false;
+        if(this.operacion != null && mensajeComparar.operacion != null){
+           if(!(this.operacion.equals(mensajeComparar.operacion)))
+               return false;
+        }
+        
+        if((this.estado== null && mensajeComparar.estado!=null)
+                || (this.estado!= null && mensajeComparar.estado==null))
+            return false;
+        if(this.estado != null && mensajeComparar.estado != null){
+           if(!(this.estado.equals(mensajeComparar.estado)))
+               return false;
+        }
+        
+        if((this.nombreUsuario== null && mensajeComparar.nombreUsuario!=null) 
+                || (this.nombreUsuario!= null && mensajeComparar.nombreUsuario==null))
+            return false;
+        if(this.nombreUsuario != null && mensajeComparar.nombreUsuario != null){
+           if(!(this.nombreUsuario.equals(mensajeComparar.nombreUsuario)))
+               return false;
+        }
+        
+        if((this.nombresUsuarios== null && mensajeComparar.nombresUsuarios!=null)
+                || (this.nombresUsuarios!= null && mensajeComparar.nombresUsuarios==null))
+            return false;
+        if(this.nombresUsuarios != null && mensajeComparar.nombresUsuarios != null){
+           if(!(this.nombresUsuarios.equals(mensajeComparar.nombresUsuarios)))
+               return false;
+        }
+        
+        if((this.nombreCuarto== null && mensajeComparar.nombreCuarto!=null) 
+                || (this.nombreCuarto!= null && mensajeComparar.nombreCuarto==null))
+            return false;
+        if(this.nombreCuarto != null && mensajeComparar.nombreCuarto != null){
+           if(!(this.nombreCuarto.equals(mensajeComparar.nombreCuarto)))
+               return false;
+        }
+        return true;
+    }
     public void vacia(){
         this.tipo=null;
         this.mensaje=null;

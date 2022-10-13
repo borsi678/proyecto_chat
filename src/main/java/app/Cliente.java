@@ -24,6 +24,7 @@ public class Cliente {
         System.out.println("Introduce puerto del servidor");
         int puerto = scanner.nextInt();
         estableceConexionServidor(direccionIP, puerto);
+        System.out.println("¡Bienvenido al chat!");
         escrituraMensajesUsuario();
     }
     public void estableceConexionServidor(String direccionIP, int puerto){
@@ -44,6 +45,7 @@ public class Cliente {
         String mensaje="";
         while(!(mensaje.equals("DISCONNECT"))){
             try {
+                System.out.print("Escribe mensaje:");
                 mensaje=scanner.nextLine();
                 if(mensaje.equals("") || mensaje == null)
                     continue;
