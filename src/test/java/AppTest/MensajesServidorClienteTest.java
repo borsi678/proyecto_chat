@@ -212,7 +212,7 @@ public class MensajesServidorClienteTest {
             if(tipo == TiposMensaje.INVALID )
                 continue;
 
-            String mensajeEscrito =String.format("%s Usuario Mensaje Uno Dos Tres", tipo.toString());
+            String mensajeEscrito =String.format("%s Mensaje Uno Dos Tres", tipo.toString());
             mensaje = constructor.conTipo(tipo.toString())
                                                 .construyeMensaje();
             mensajeComparar = MensajesServidorCliente.conTipoMensaje(mensajeEscrito);
@@ -226,15 +226,15 @@ public class MensajesServidorClienteTest {
     @Test
     public void testConTipoNombreCuarto() {
         constructor.vacia();
-        constructor.conMensaje("Mensaje Uno Dos Tres");
+        constructor.conNombreCuarto("Sala1");
         for(TiposMensaje tipo : TiposMensaje.values()){
             if(tipo == TiposMensaje.INVALID )
                 continue;
 
-            String mensajeEscrito =String.format("%s Usuario Mensaje Uno Dos Tres", tipo.toString());
+            String mensajeEscrito =String.format("%s Sala1", tipo.toString());
             mensaje = constructor.conTipo(tipo.toString())
                                                 .construyeMensaje();
-            mensajeComparar = MensajesServidorCliente.conTipoMensaje(mensajeEscrito);
+            mensajeComparar = MensajesServidorCliente.conTipoNombreCuarto(mensajeEscrito);
             assertEquals(mensaje, mensajeComparar);
         }
     }
@@ -245,7 +245,22 @@ public class MensajesServidorClienteTest {
      */
     @Test
     public void testConTipoMensajeUsuarioNombreCuarto() {
+        constructor.vacia();        
+        String mensajeEscrito = "NEW_ROOM Usuario Sala1 Mensaje";
+        mensaje = constructor.conTipo("NEW_ROOM")
+                .conNombreUsuario("Usuario")
+                .conNombreCuarto("Sala1")
+                .conMensaje("Mensaje")
+                .construyeMensaje();
+        mensajeComparar = MensajesServidorCliente.conTipoMensajeUsuarioNombreCuarto(mensajeEscrito);
+        assertEquals(mensaje, mensajeComparar);
+        try{
+            mensajeEscrito="L Usuario Sala1 Mensaje";
+            mensajeComparar=MensajesServidorCliente.conTipoMensajeUsuarioNombreCuarto(mensajeEscrito);
+            Assert.fail();
+        }catch(ExcepcionMensajeInvalido ex){}
     }
+
 
     /**
      * Test of conTipoNombreCuartoUsuario method, of class
