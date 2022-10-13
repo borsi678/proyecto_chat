@@ -238,12 +238,12 @@ public class MensajesServidorCliente {
     
     private static String concatenaCadenasMensaje(String[] mensaje, int indice){
         String mensajeConcatenado="";
-        for(indice= 2; indice<mensaje.length; indice++){
-            if(indice==mensaje.length-1){
-                mensajeConcatenado+=mensaje[indice];
+        for(int i=indice ;i<mensaje.length; i++){
+            if(i==mensaje.length-1){
+                mensajeConcatenado+=mensaje[i];
                 continue;
             }
-            mensajeConcatenado+=mensaje[indice]+" ";
+            mensajeConcatenado+=mensaje[i]+" ";
         }
         return mensajeConcatenado;
     }
