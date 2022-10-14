@@ -12,6 +12,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import app.ConstructorMensajes;
+import app.ExcepcionSerializa;
 import app.Mensajes;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.logging.Level;
@@ -40,7 +41,7 @@ public class ProcesadorClienteTest {
         try {
             String serializadaComparar= procesador.serializaMensaje(mensaje);
             assertEquals(serializada , serializadaComparar);
-        } catch (JsonProcessingException ex) {
+        } catch (ExcepcionSerializa ex) {
             Logger.getLogger(ProcesadorClienteTest.class.getName()).log(Level.SEVERE, null, ex);
         }
     }

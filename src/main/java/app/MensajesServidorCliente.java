@@ -208,11 +208,11 @@ public class MensajesServidorCliente {
         String[] argumentosMensaje = mensaje.split(" ");
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaATipoMensaje(argumentosMensaje[0]);
-        String[] usuarios=new String[argumentosMensaje.length];
+        String[] usuarios=new String[argumentosMensaje.length-2];
         for(int i=2; i < argumentosMensaje.length; i++){
             if(argumentosMensaje[i].contains(","))
                 argumentosMensaje[i]=argumentosMensaje[i].replace(",", "");
-               usuarios[i]=argumentosMensaje[i];
+               usuarios[i-2]=argumentosMensaje[i];
         }
         if(operacion == TiposMensaje.INVALID)
             throw new ExcepcionMensajeInvalido();
@@ -264,5 +264,6 @@ public class MensajesServidorCliente {
         }
         return EstadoUsuario.NONE;
     }
+    
     
 }

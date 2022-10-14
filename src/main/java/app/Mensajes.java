@@ -109,7 +109,7 @@ public class Mensajes {
                 arregloCadena+=String.format("%s]", nombresUsuarios[i]);
                 continue;
             }
-            arregloCadena+=String.format("% , ",nombresUsuarios[i]);
+            arregloCadena+=String.format("%s, ",nombresUsuarios[i]);
         }
         return arregloCadena;
     }
@@ -179,7 +179,7 @@ public class Mensajes {
                 || (this.nombresUsuarios!= null && mensajeComparar.nombresUsuarios==null))
             return false;
         if(this.nombresUsuarios != null && mensajeComparar.nombresUsuarios != null){
-           if(!(this.nombresUsuarios.equals(mensajeComparar.nombresUsuarios)))
+           if(!(this.usuariosToString().equals(mensajeComparar.usuariosToString())))
                return false;
         }
         

@@ -212,13 +212,7 @@ public class ProcesadorServidor extends Procesador {
         String mensajeEnviar;
         if(servidor.contieneCuarto(nombreCuarto) && servidor.estaUsuarioInvitadoACuarto(usuarioCliente, 
                 nombreCuarto)){
-            if(!(servidor.estaUsuarioInvitadoACuarto(usuarioCliente, nombreCuarto))){
-                mensajeEnviar=String.format("JOIN_ROOM %s El usuario no ha sido invitado al cuarto", nombreCuarto);
-                mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar, 
-                        TiposMensaje.WARNING);
-                salida.writeUTF(serializaMensaje(mensajeServidor));
-                return;
-            } else if(servidor.estaUsuarioUnidoACuarto(usuarioCliente, nombreCuarto)){
+            if(servidor.estaUsuarioUnidoACuarto(usuarioCliente, nombreCuarto)){
                 mensajeEnviar=String.format("JOIN_ROOM %s El usuario ya se unio al cuarto '%s'", nombreCuarto);
                 mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar, 
                         TiposMensaje.WARNING);
@@ -235,6 +229,13 @@ public class ProcesadorServidor extends Procesador {
                     TiposMensaje.INFO);
             return;
         }
+        if(!(servidor.estaUsuarioInvitadoACuarto(usuarioCliente, nombreCuarto))){
+                mensajeEnviar=String.format("JOIN_ROOM %s El usuario no ha sido invitado al cuarto", nombreCuarto);
+                mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar, 
+                        TiposMensaje.WARNING);
+                salida.writeUTF(serializaMensaje(mensajeServidor));
+                return;
+            }
         mensajeEnviar=String.format("JOIN_ROOM %s El cuarto '%s' no existe", nombreCuarto);
         mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar
                 , TiposMensaje.WARNING);

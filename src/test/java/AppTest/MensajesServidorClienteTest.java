@@ -7,6 +7,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import app.ConstructorMensajes;
+import app.EstadoUsuario;
 import app.ExcepcionEstadoInvalido;
 import app.ExcepcionMensajeInvalido;
 import app.Mensajes;
@@ -268,6 +269,23 @@ public class MensajesServidorClienteTest {
      */
     @Test
     public void testConTipoNombreCuartoUsuario() {
+        constructor.vacia();
+        constructor.conNombreCuarto("Sala1")
+                          .conNombreUsuario("Usuario");
+        for(TiposMensaje tipo : TiposMensaje.values()){
+            if(tipo == TiposMensaje.INVALID)
+                continue;
+            String mensajeEscrito=String.format("%s Sala1 Usuario", tipo.toString());
+            mensajeComparar=MensajesServidorCliente.conTipoNombreCuartoUsuario(mensajeEscrito);
+            mensaje=constructor.conTipo(tipo.toString()).construyeMensaje();
+            assertEquals(mensaje, mensajeComparar);                                      
+        }
+        try{
+            String mensajeEscrito="L Sala1 Usuario";
+            mensajeComparar=MensajesServidorCliente.conTipoNombreCuartoUsuario(mensajeEscrito);
+            Assert.fail();
+        }catch(ExcepcionMensajeInvalido ex){}
+               
     }
 
     /**
@@ -275,6 +293,21 @@ public class MensajesServidorClienteTest {
      */
     @Test
     public void testConTipoUsuarios() {
+        constructor.vacia();
+        String[] usuarios={"1", "2", "3","4"};
+        constructor.conNombresUsuarios(usuarios);
+       for(TiposMensaje tipo : TiposMensaje.values()){
+            if(tipo == TiposMensaje.INVALID)
+                continue;
+            String mensajeEscrito=String.format("%s", tipo.toString());
+            mensajeComparar=MensajesServidorCliente.conTipoUsuarios(mensajeEscrito, usuarios);
+            mensaje=constructor.conTipo(tipo.toString()).construyeMensaje();
+            assertEquals(mensaje, mensajeComparar);                                      
+        }
+        try{
+            mensajeComparar=MensajesServidorCliente.conTipoUsuarios("L", usuarios);
+            Assert.fail();
+        }catch(ExcepcionMensajeInvalido ex){}
     }
 
     /**
@@ -283,6 +316,19 @@ public class MensajesServidorClienteTest {
      */
     @Test
     public void testConTipoNombreCuartoMensaje() {
+        constructor.vacia();        
+        String mensajeEscrito = "NEW_ROOM Sala1 Mensaje";
+        mensaje = constructor.conTipo("NEW_ROOM")
+                .conNombreCuarto("Sala1")
+                .conMensaje("Mensaje")
+                .construyeMensaje();
+        mensajeComparar = MensajesServidorCliente.conTipoNombreCuartoMensaje(mensajeEscrito);
+        assertEquals(mensaje, mensajeComparar);
+        try{
+            mensajeEscrito="L Sala1 Mensaje";
+            mensajeComparar=MensajesServidorCliente.conTipoNombreCuartoMensaje(mensajeEscrito);
+            Assert.fail();
+        }catch(ExcepcionMensajeInvalido ex){}
     }
 
     /**
@@ -291,6 +337,22 @@ public class MensajesServidorClienteTest {
      */
     @Test
     public void testConTipoMensajeOperacionNombreCuarto() {
+        constructor.vacia();
+        constructor.conNombreCuarto("Sala1").conMensaje("Mensaje");
+       for(TiposMensaje tipo : TiposMensaje.values()){
+            if(tipo == TiposMensaje.INVALID)
+                continue;
+            String mensajeEscrito=String.format("%s Sala1 Mensaje ", tipo.toString());
+            mensajeComparar=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEscrito,
+                    tipo);
+            mensaje=constructor.conTipo(tipo.toString()).conOperacion(tipo.toString()).construyeMensaje();
+            assertEquals(mensaje, mensajeComparar);                                      
+        }
+        try{
+            mensajeComparar=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto("L Sala1 Mensaje", 
+                    TiposMensaje.INFO);
+            Assert.fail();
+        }catch(ExcepcionMensajeInvalido ex){}
     }
 
     /**
@@ -299,6 +361,21 @@ public class MensajesServidorClienteTest {
      */
     @Test
     public void testConTipoNombreCuartoUsuarios() {
+        constructor.vacia();
+        String[] usuarios={"1","2","3","4","5"};
+        constructor.conNombreCuarto("Sala1").conNombresUsuarios(usuarios);
+       for(TiposMensaje tipo : TiposMensaje.values()){
+            if(tipo == TiposMensaje.INVALID)
+                continue;
+            String mensajeEscrito=String.format("%s Sala1 1, 2, 3, 4, 5", tipo.toString());
+            mensajeComparar=MensajesServidorCliente.conTipoNombreCuartoUsuarios(mensajeEscrito);
+            mensaje=constructor.conTipo(tipo.toString()).construyeMensaje();
+            Assert.assertTrue(mensaje.equals(mensajeComparar));                                      
+        }
+        try{
+            mensajeComparar=MensajesServidorCliente.conTipoNombreCuartoUsuarios("L Sala1 1, 2, 3, 4");
+            Assert.fail();
+        }catch(ExcepcionMensajeInvalido ex){}
     }
 
     /**
@@ -307,13 +384,40 @@ public class MensajesServidorClienteTest {
      */
     @Test
     public void testConTipoNombreCuartoUsuarioMensaje() {
+        constructor.vacia();
+        constructor.conNombreCuarto("Sala1").conNombreUsuario("Usuario").conMensaje("Mensaje");
+       for(TiposMensaje tipo : TiposMensaje.values()){
+            if(tipo == TiposMensaje.INVALID)
+                continue;
+            String mensajeEscrito=String.format("%s Sala1 Usuario Mensaje", tipo.toString());
+            mensajeComparar=MensajesServidorCliente.conTipoNombreCuartoUsuarioMensaje(mensajeEscrito);
+            mensaje=constructor.conTipo(tipo.toString()).construyeMensaje();
+            Assert.assertTrue(mensaje.equals(mensajeComparar));                                      
+        }
+        try{
+            mensajeComparar=MensajesServidorCliente.conTipoNombreCuartoUsuarioMensaje("L Sala1 Usuario Mensaje");
+            Assert.fail();
+        }catch(ExcepcionMensajeInvalido ex){}
     }
 
     /**
      * Test of convertirCadenaAMensaje method, of class MensajesServidorCliente.
      */
     @Test
-    public void testConvertirCadenaAMensaje() {
+    public void testConvertirCadenaATipoMensaje() {
+        for(TiposMensaje tipo : TiposMensaje.values()){
+            TiposMensaje tipoComparar=MensajesServidorCliente.
+                    convertirCadenaATipoMensaje(tipo.toString().toLowerCase());
+            Assert.assertTrue(tipo.equals(tipoComparar));
+        }
     }
 
+    @Test
+    public void testConvertirCadenaAEstadoUsuario(){
+        for(EstadoUsuario estado : EstadoUsuario.values()){
+            EstadoUsuario estadoComparar=MensajesServidorCliente
+                    .convertirCadenaAEstadoUsuario(estado.toString().toLowerCase());
+            Assert.assertTrue(estado.equals(estadoComparar));
+        }
+    }
 }
