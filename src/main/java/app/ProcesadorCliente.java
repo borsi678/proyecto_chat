@@ -9,24 +9,39 @@ import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import app.ExcepcionMensajeInvalido;
-
+/**
+ * <p> Clase que extiende de Procesador para impelemtar el comportamiento del Cliente</p>
+ * 
+ * <p> La clase se encarga de enviar mensajes al servidor que escribe el usuario
+ *      asi como de recibir los mensajes que envia el servidor.</p>
+ * 
+ */
 public class ProcesadorCliente extends Procesador{
-    
+    /**El cliente del usuario */
     private Cliente cliente;
     
+    /**Constructor, no recibe ningun parametro e inicializa los @param de la clase en  */
     public ProcesadorCliente(){
         this.cliente=null;
         this.entrada=null;
         this.salida=null;
     }
     
+    /**Constructor que recibe un cliente y un socket
+     * @param cliente el cliente del usuario
+     * @param socket el socket de la conexion del cliente
+    */
     public ProcesadorCliente(Cliente cliente, Socket socket) throws IOException{
         this.cliente=cliente;
         this.entrada=new DataInputStream(socket.getInputStream());
         this.salida=new DataOutputStream(socket.getOutputStream());
     }
     
-    public void iniciaConexion() throws IOException{
+    /**Metodo que se encarga de incializar la conexion con el servidor
+     * Falla si el cliente manda un mensaje diferente a IDENTIFY NombreUsuario
+     * 
+     */
+    public void iniciaConexion(){
         try {
             String mensajeServidorSerializado=entrada.readUTF();
             Mensajes mensajeServidor=deserializaMensaje(mensajeServidorSerializado);
@@ -48,15 +63,18 @@ public class ProcesadorCliente extends Procesador{
                 this.cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
                 this.cliente.imprimeMensaje("Intentalo de nuevo");
                 cliente.iniciaCliente();
-            }else
-                throw new IOException();
+                return;
+            }
         } catch(NullPointerException ex){
             throw new ExcepcionMensajeInvalido("Mensaje Invalido");
         } catch (IOException ex) {
-            throw new IOException("No se pudo realizar la conexion");
+            System.out.println("No se pudo realizar la conexion");
         }
     }
 
+    /**Metodo  para el hilo de jecucion que es lanzado en el cliente
+     * Se encarga de recibir mensajes del servidor y procesarlos para el cliente
+     */
     @Override public void run(){
         String mensajeServidor="";
         Mensajes mensaje;
@@ -71,9 +89,10 @@ public class ProcesadorCliente extends Procesador{
         }
     }
     
-    
+    /**Metodo que contiene todos los posibles casos de mensajes que puede enviar el cliente por parte del usuario
+     * Falla si el mensaje no es valido o contiene un estado no valido*/
     @Override
-    public void menuMensajes(String mensaje) throws IOException{
+    public void menuMensajes(String mensaje){
 
         String[] argumentoMensaje=mensaje.split(" ");
             try{
@@ -137,7 +156,9 @@ public class ProcesadorCliente extends Procesador{
         }
             
     }
-    
+    /**Metodo que se encarga de procesar los mensajes recibidos por el servidor
+     * Contiene los posibles casos de mensajes del protocolo establecido
+     */
     public void mensajesRecibidos(Mensajes mensaje){
         String mensajeImprimir;
         switch(mensaje.getTipo().toUpperCase()){
@@ -193,7 +214,10 @@ public class ProcesadorCliente extends Procesador{
                 break;      
         }
     }
-    
+    /**Metodo que se encarga de enviar el mensaje al servidor para pedir la lista de usuarios conectados
+     * Ademas de que recibe el mensaje por parte del servidor que contiene la lista de usuarios
+     * @param tipo eL tipo de mensaje
+     */
     public void recibeListaUsuariosServidor(String tipo) throws JsonProcessingException, IOException{
         Mensajes mensajeCliente= MensajesServidorCliente.conTipo(tipo);
         salida.writeUTF(serializaMensaje(mensajeCliente));
@@ -202,7 +226,10 @@ public class ProcesadorCliente extends Procesador{
             cliente.imprimeMensaje(mensajeServidor.getNombresUsuarios().toString());
         }
     }
-    
+   
+    /**Metodo que encarga de enviar el mensaje al servidor con el nuevo estado del usuario
+     * Recibe un mensaje del servidor diciendo si se cumplio la accion o hubo un error
+     */
     public void cambiaEstado(String mensaje) throws IOException, ExcepcionEstadoInvalido{
         Mensajes mensajeCliente=MensajesServidorCliente.conTipoEstado(mensaje);
         Mensajes mensajeServidor;
@@ -227,6 +254,9 @@ public class ProcesadorCliente extends Procesador{
         }
     }
     
+    /**Metodo que se encarga de enviar un mensaje privado a un usuario quu esta conectado con el servidor
+     *  si el usuario no existe se imprime el error que manda el mensaje del servidor
+    */
     public void enviaMensajePrivado(String mensaje) throws JsonProcessingException, IOException{
         Mensajes mensajeCliente=MensajesServidorCliente.conTipoUsuarioMensaje(mensaje);
         salida.writeUTF(serializaMensaje(mensajeCliente));
@@ -241,11 +271,15 @@ public class ProcesadorCliente extends Procesador{
         }
     }
     
+    /**Metodo que se encarga de enviar un mensaje publico por parte del usuario al servidor */
     public void enviaMensajePublico(String mensaje) throws JsonProcessingException, IOException{
         Mensajes mensajeServidor=MensajesServidorCliente.conTipoMensaje(mensaje);
         salida.writeUTF(serializaMensaje(mensajeServidor));
     }
     
+    /**Metodo que se encarga de enviar un mensaje con la operacion NEW_ROOM y el nombre de la sala al servidor.
+     * El servidor responde si se completo la accion satisfactoriamente o hubo un error.
+     */
     public void creaNuevoCuarto(String mensaje) throws JsonProcessingException, IOException{
         Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuarto(mensaje);
         salida.writeUTF(serializaMensaje(mensajeCliente));
@@ -262,6 +296,9 @@ public class ProcesadorCliente extends Procesador{
             cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
     }
     
+    /**Metodo que se encarga de enviar un mensaje al servidor con la Operacion JOIN_ROOM y el nombre de sala.
+     * El servidor responde si se completo la accion satisfactoraimente o hubo un problema.
+     */
     public void unirseCuarto(String mensaje) throws JsonProcessingException, IOException{
         Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuarto(mensaje);
         salida.writeUTF(serializaMensaje(mensajeCliente));
@@ -279,6 +316,10 @@ public class ProcesadorCliente extends Procesador{
         }
     }
     
+    /**Metodo que se encarga de pedir la lista de usuarios de una sala determinda
+     * Si la sala existe y el usuario esta unido a ella el servidor responde con la lista de usuarios
+     * 
+     */
     public void recibeUsuariosCuarto(String mensaje) throws JsonProcessingException, IOException{
         Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuarto(mensaje);
         salida.writeUTF(serializaMensaje(mensajeCliente));

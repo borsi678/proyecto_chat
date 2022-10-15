@@ -44,22 +44,18 @@ public class Cliente {
     public void escrituraMensajesUsuario(){
         String mensaje="";
         while(!(mensaje.equals("DISCONNECT"))){
-            try {
+            
                 System.out.print("Escribe mensaje:");
                 mensaje=scanner.nextLine();
                 if(mensaje.equals("") || mensaje == null)
                     continue;
                 procesador.menuMensajes(mensaje);
-            } catch (IOException ex) {
-                System.out.println("No se pudo enviar el mensaje, intentelo de nuevo.");
-            }
+            
         }
-        try {
+        
             procesador.menuMensajes(mensaje);
             iniciaCliente();
-        } catch (IOException ex) {
-            System.out.println("Saliendo del programa");
-        }
+        
     }
     
     public void setNombreUsuario(String nombre){

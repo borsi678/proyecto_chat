@@ -1,15 +1,14 @@
 package app;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.LinkedList;
-import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.sound.midi.Transmitter;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 public class ProcesadorServidor extends Procesador {
 
@@ -77,30 +76,61 @@ public class ProcesadorServidor extends Procesador {
     @Override
     public void mensajesRecibidos(Mensajes mensaje) {
         try {
-            if (mensaje.getTipo().equals("STATUS"))
-                usuarioEstado(mensaje);
-            else if(mensaje.getTipo().equals("USERS"))
-                listaUsuarios();
-            else if(mensaje.getTipo().equals("MESSAGE"))
-                mensajePrivado(mensaje);
-            else if(mensaje.getTipo().equals("PUBLIC_MESSAGE"))
-                mensajePublico(mensaje);
-            else if(mensaje.getTipo().equals("NEW_ROOM"))
-                nuevoCuarto(mensaje);
-            else if(mensaje.getTipo().equals("INVITE"))
-                invitaUsuarios(mensaje);
-            else if(mensaje.getTipo().equals("JOIN_ROOM"))
-                unirseSala(mensaje);
-            else if(mensaje.getTipo().equals("ROOM_USERS"))
-                usuariosCuarto(mensaje);
-            else if(mensaje.getTipo().equals("ROOM_MESSAGE"))
-                cuartoMensaje(mensaje);
-            else if(mensaje.getTipo().equals("LEAVE_ROOM"))
-                abandonaCuarto(mensaje);
-            else if(mensaje.getTipo().equals("DISCONNECT"))
-                desconectaUsuario();
+            switch(mensaje.getTipo().toUpperCase()){
+                case "STATUS":
+                    usuarioEstado(mensaje);
+                    break;
+                case "USERS":    
+                    listaUsuarios();
+                    break;
+                case "MESSAGE":
+                    mensajePrivado(mensaje);
+                    break;
+                case "PUBLIC_MESSAGE":
+                    mensajePublico(mensaje);
+                    break;
+                case "NEW_ROOM":
+                    nuevoCuarto(mensaje);
+                    break;
+                case "INVITE":    
+                    invitaUsuarios(mensaje);
+                    break;
+                case "JOIN_ROOM":    
+                    unirseSala(mensaje);
+                    break;
+                case "ROOM_USERS":    
+                    usuariosCuarto(mensaje);
+                    break;
+                case "ROOM_MESSAGE":
+                    cuartoMensaje(mensaje);
+                    break;
+                case "LEAVE_ROOM":
+                    abandonaCuarto(mensaje);
+                    break;
+                case "DISCONNECT":    
+                    desconectaUsuario();
+                    break;
+            }
+        } catch (ExcepcionEstadoInvalido ex){
+            String excepcion =String.format("Error en la operacion %s Estado invalido.", mensaje.getTipo());
+            System.out.println(excepcion);
+            System.out.println(ex.toString());
+        } catch (ExcepcionMensajeInvalido ex ){
+            String excepcion =String.format("Error en la operacion %s Tipo de Mensaje invalido.", mensaje.getTipo());
+            System.out.println(excepcion);
+            System.out.println(ex.toString());
+        } catch(ExcepcionDeserializa ex){
+            String excepcion =String.format("Error en la operacion %s Desereailizacion fallo", mensaje.getTipo());
+            System.out.println(excepcion);
+            System.out.println(ex.toString());
+        } catch(ExcepcionSerializa ex){
+            String excepcion =String.format("Error en la operacion %s Serializacion fallo.", mensaje.getTipo());
+            System.out.println(excepcion);
+            System.out.println(ex.toString());
         } catch (IOException ex) {
-
+            String excepcion =String.format("Error en la operacion %s Problema con la conexion con el cliente.", mensaje.getTipo());
+            System.out.println(excepcion);
+            System.out.println(ex.toString());
         }
     }
 
