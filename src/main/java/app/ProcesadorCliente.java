@@ -17,10 +17,11 @@ import app.ExcepcionMensajeInvalido;
  * 
  */
 public class ProcesadorCliente extends Procesador{
+    
     /**El cliente del usuario */
     private Cliente cliente;
     
-    /**Constructor, no recibe ningun parametro e inicializa los @param de la clase en  */
+    /**Constructor, no recibe ningun parametro e inicializa los @param de la clase en null */
     public ProcesadorCliente(){
         this.cliente=null;
         this.entrada=null;
@@ -37,8 +38,10 @@ public class ProcesadorCliente extends Procesador{
         this.salida=new DataOutputStream(socket.getOutputStream());
     }
     
-    /**Metodo que se encarga de incializar la conexion con el servidor
-     * Falla si el cliente manda un mensaje diferente a IDENTIFY NombreUsuario
+    /**Metodo que se encarga de incializar la conexion con el servidor. El servidor envia un mensaje 
+     * pidiendo la identificacion del usuario, el usuario envia un mensaje son su nombre.
+     * El servidor responde si se realizo la operacion o si hubo un error, si ocurrio un error el servidor 
+     * nos desconectara.
      * 
      */
     public void iniciaConexion(){
@@ -72,8 +75,8 @@ public class ProcesadorCliente extends Procesador{
         }
     }
 
-    /**Metodo  para el hilo de jecucion que es lanzado en el cliente
-     * Se encarga de recibir mensajes del servidor y procesarlos para el cliente
+    /**Metodo que se encarga de procesar los mensajes recibidos por el servidor. Este metodo es 
+     * usuado por el hilo de ejecucion que es lanzado por el cliente.
      */
     @Override public void run(){
         String mensajeServidor="";
@@ -89,8 +92,11 @@ public class ProcesadorCliente extends Procesador{
         }
     }
     
-    /**Metodo que contiene todos los posibles casos de mensajes que puede enviar el cliente por parte del usuario
-     * Falla si el mensaje no es valido o contiene un estado no valido*/
+    /**Metodo que se encarga de procesar los mensajes que envia el usuario al char para el servidor.
+     * Las posibles operaciones son: USERS, STATUS, MESSAGE, PUBLIC_MESSAGE, NEW_ROOM, JOIN_ROOM, 
+     * ROOM_USERS, LEAVE_ROOM, INVITE, ROOM_MESSAGE, DISCONNECT.
+     * @param mensaje el mensaje a procesar.
+     */
     @Override
     public void menuMensajes(String mensaje){
 
@@ -156,8 +162,11 @@ public class ProcesadorCliente extends Procesador{
         }
             
     }
-    /**Metodo que se encarga de procesar los mensajes recibidos por el servidor
-     * Contiene los posibles casos de mensajes del protocolo establecido
+    /**Metodo que se encarga de procesar los mensajes recibidos por el servidor, las posibles 
+     * operaciones son: NEW_USER, NEW_STATUS, USER_LIST, ROOM_USER_LIST, MESSAGE_FROM,
+     * PUBLIC_MESSAGE_FROM, INVITATION, JOINED_ROOM, ROOM_MESSAGE_FROM, LEFT_ROOM,
+     * DISCONNECTED.
+     * @param mensaje el mensaje a procesar.
      */
     public void mensajesRecibidos(Mensajes mensaje){
         String mensajeImprimir;
@@ -214,11 +223,14 @@ public class ProcesadorCliente extends Procesador{
                 break;      
         }
     }
-    /**Metodo que se encarga de enviar el mensaje al servidor para pedir la lista de usuarios conectados
-     * Ademas de que recibe el mensaje por parte del servidor que contiene la lista de usuarios
-     * @param tipo eL tipo de mensaje
+    /**Metodo que se encarga de enviar el mensaje al servidor para pedir la lista de usuarios conectados.
+     * El servidor responde con la lista de usuarios conectados.
+     * @param tipo el tipo de operacion del mensaje.
+     * @throws ExcepcionSerializa si hubo un error al serializar el mensaje del cliente.
+     * @throws ExcepcionDeserializa si hubo un error al deserializar el mensaje del servidor.
+     * @throws IOException si hubo un error con la conexion.
      */
-    public void recibeListaUsuariosServidor(String tipo) throws JsonProcessingException, IOException{
+    public void recibeListaUsuariosServidor(String tipo) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente= MensajesServidorCliente.conTipo(tipo);
         salida.writeUTF(serializaMensaje(mensajeCliente));
         Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
@@ -227,10 +239,14 @@ public class ProcesadorCliente extends Procesador{
         }
     }
    
-    /**Metodo que encarga de enviar el mensaje al servidor con el nuevo estado del usuario
-     * Recibe un mensaje del servidor diciendo si se cumplio la accion o hubo un error
+    /**Metodo que encarga de enviar el mensaje al servidor con el nuevo estado del usuario.
+     * El servidor responde si se realizo la operacion o hubo un error.
+     * @param mensaje el mensaje a serializar.
+     * @throws ExcepcionSerializa si hubo un error al serializar el mensaje del cliente.
+     * @throws ExcepcionDeserializa si hubo un error al deserializar el mensaje del servidor.
+     * @throws IOException si hubo un error con la conexion.
      */
-    public void cambiaEstado(String mensaje) throws IOException, ExcepcionEstadoInvalido{
+    public void cambiaEstado(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente=MensajesServidorCliente.conTipoEstado(mensaje);
         Mensajes mensajeServidor;
         salida.writeUTF(serializaMensaje(mensajeCliente));
@@ -254,10 +270,15 @@ public class ProcesadorCliente extends Procesador{
         }
     }
     
-    /**Metodo que se encarga de enviar un mensaje privado a un usuario quu esta conectado con el servidor
-     *  si el usuario no existe se imprime el error que manda el mensaje del servidor
+    /**Metodo que se encarga de enviar un mensaje privado a un usuario al servidor, el mensaje 
+     * contiene el nombre del usuario receptor y el mensaje del usuario.
+     * El servidor responde si se realizo la operacion o hubo un error.
+     * @param mensaje el mensaje a serializar.
+     * @throws ExcepcionSerializa si hubo un error al serializar el mensaje del cliente.
+     * @throws ExcepcionDeserializa si hubo un error al deserializar el mensaje del servidor.
+     * @throws IOException si hubo un error con la conexion.
     */
-    public void enviaMensajePrivado(String mensaje) throws JsonProcessingException, IOException{
+    public void enviaMensajePrivado(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente=MensajesServidorCliente.conTipoUsuarioMensaje(mensaje);
         salida.writeUTF(serializaMensaje(mensajeCliente));
         String mensajeServidorSerializado=entrada.readUTF();
@@ -266,21 +287,32 @@ public class ProcesadorCliente extends Procesador{
             if(mensajeServidor.getTipo().equals("WARNING") && 
                     mensajeServidor.getOperacion().equals("MESSAGE") &&
                     mensajeServidor.getNombreUsuario().equals(mensajeCliente.getNombreUsuario()) &&
-                    mensajeServidor.getMensaje().equals("El usaurio "+mensajeCliente.getNombreUsuario()+" no existe") )
+                    mensajeServidor.getMensaje().equals("El usuario "+mensajeCliente.getNombreUsuario()+" no existe") )
                cliente.imprimeMensaje(mensajeServidor.getTipo()+mensajeServidor.getMensaje());
         }
     }
     
-    /**Metodo que se encarga de enviar un mensaje publico por parte del usuario al servidor */
-    public void enviaMensajePublico(String mensaje) throws JsonProcessingException, IOException{
+    /**Metodo que se encarga de enviar un mensaje publico por parte del usuario al servidor. 
+     * EL servidor no responde nada y envia el mensaje a todos los clientes conectados.
+     * @param mensaje el mensaje a serializar.
+     * @throws ExcepcionSerializa si hubo un error al serializar el mensaje del cliente.
+     * @throws ExcepcionDeserializa si hubo un error al deserializar el mensaje del servidor.
+     * @throws IOException si hubo un error con la conexion.
+     */
+    public void enviaMensajePublico(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeServidor=MensajesServidorCliente.conTipoMensaje(mensaje);
         salida.writeUTF(serializaMensaje(mensajeServidor));
     }
     
-    /**Metodo que se encarga de enviar un mensaje con la operacion NEW_ROOM y el nombre de la sala al servidor.
-     * El servidor responde si se completo la accion satisfactoriamente o hubo un error.
+    /**Metodo que se encarga de enviar un mensaje al servidor para crear un cuarto, el mensaje 
+     * contiene el nombre del cuarto.
+     * El servidor responde si se completo la operacion o hubo un error.
+     * @param mensaje el mensaje a serializar.
+     * @throws ExcepcionSerializa si hubo un error al serializar el mensaje del cliente.
+     * @throws ExcepcionDeserializa si hubo un error al deserializar el mensaje del servidor.
+     * @throws IOException si hubo un error con la conexion.
      */
-    public void creaNuevoCuarto(String mensaje) throws JsonProcessingException, IOException{
+    public void creaNuevoCuarto(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuarto(mensaje);
         salida.writeUTF(serializaMensaje(mensajeCliente));
         Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
@@ -296,10 +328,15 @@ public class ProcesadorCliente extends Procesador{
             cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
     }
     
-    /**Metodo que se encarga de enviar un mensaje al servidor con la Operacion JOIN_ROOM y el nombre de sala.
-     * El servidor responde si se completo la accion satisfactoraimente o hubo un problema.
+    /** Metodo que se encarga de enviar el mensaje al servidor para unirse a una sala determinada,
+     * la sala debe existir y el usuario ser previamente invitado.
+     * El servidor responde si se realizo la operacion o hubo un error.
+     * @param mensaje el mensaje a serializar.
+     * @throws ExcepcionSerializa si hubo un error al serializar el mensaje del cliente.
+     * @throws ExcepcionDeserializa si hubo un error al deserializar el mensaje del servidor.
+     * @throws IOException si hubo un error con la conexion.
      */
-    public void unirseCuarto(String mensaje) throws JsonProcessingException, IOException{
+    public void unirseCuarto(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuarto(mensaje);
         salida.writeUTF(serializaMensaje(mensajeCliente));
         Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
@@ -316,11 +353,16 @@ public class ProcesadorCliente extends Procesador{
         }
     }
     
-    /**Metodo que se encarga de pedir la lista de usuarios de una sala determinda
-     * Si la sala existe y el usuario esta unido a ella el servidor responde con la lista de usuarios
+    /** Metodo que se encarga de pedir la lista de usuarios de una sala determinda
+     * Si la sala existe y el usuario esta unido a ella el servidor responde con la lista de usuarios, si no el 
+     * servidor responde con un error.
+     * @param mensaje el mensaje a serializar.
+     * @throws ExcepcionSerializa si hubo un error al serializar el mensaje del cliente.
+     * @throws ExcepcionDeserializa si hubo un error al deserializar el mensaje del servidor.
+     * @throws IOException si hubo un error con la conexion.
      * 
      */
-    public void recibeUsuariosCuarto(String mensaje) throws JsonProcessingException, IOException{
+    public void recibeUsuariosCuarto(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuarto(mensaje);
         salida.writeUTF(serializaMensaje(mensajeCliente));
         Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
@@ -333,7 +375,15 @@ public class ProcesadorCliente extends Procesador{
             cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
     }
     
-    public void abandonaCuarto(String mensaje) throws JsonProcessingException, IOException{
+    /**
+     * Metodo que se encarga de enviar el mensaje para abandonar el cuarto
+     * El servidor responde si se realizo la operacion o sucedio un error.
+     * @param mensaje el mensaje a serializar.
+     * @throws ExcepcionSerializa si hubo un error al serializar el mensaje del cliente.
+     * @throws ExcepcionDeserializa si hubo un error al deserializar el mensaje del servidor.
+     * @throws IOException si hubo un error con la conexion. 
+     */
+    public void abandonaCuarto(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuarto(mensaje);
         salida.writeUTF(serializaMensaje(mensajeCliente));
         Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
@@ -349,7 +399,15 @@ public class ProcesadorCliente extends Procesador{
             cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
     }
     
-    public void invitaUsuariosCuarto(String mensaje) throws JsonProcessingException, IOException{
+    /**
+     * Metodo que se encarga de enviar el mensaje al servidor con la invitacion, normbre de cuarto y
+     * los nombres de los usuarios. El servidor responde si se realizo la operacion o sucedio un error.
+     * @param mensaje el mensaje a serializar
+     * @throws ExcepcionSerializa si hubo un error al serializar el mensaje del cliente.
+     * @throws ExcepcionDeserializa si hubo un error al deserializar el mensaje del servidor.
+     * @throws IOException si hubo un error con la conexion.
+     */
+    public void invitaUsuariosCuarto(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuartoUsuarios(mensaje);
         salida.writeUTF(serializaMensaje(mensajeCliente));
         Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
@@ -365,7 +423,15 @@ public class ProcesadorCliente extends Procesador{
         }
     }
     
-    public void enviaMensajeCuarto(String mensaje) throws JsonProcessingException, IOException{
+    /**
+     * Metodo que se escarga de enviar el mensaje al servidor que contiene el nombre de cuarto y el
+     * mensaje del usuario. El servidor solo responde si ocurrio un error.
+     * @param mensaje el mensaje a serializar.
+     * @throws ExcepcionSerializa si hubo un error al serializar el mensaje del cliente.
+     * @throws ExcepcionDeserializa si hubo un error al deserializar el mensaje del servidor.
+     * @throws IOException si hubo un error con la conexion.
+     */
+    public void enviaMensajeCuarto(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuartoMensaje(mensaje);
         salida.writeUTF(serializaMensaje(mensajeCliente));
         Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());

@@ -127,6 +127,10 @@ public class ProcesadorServidor extends Procesador {
             String excepcion =String.format("Error en la operacion %s Serializacion fallo.", mensaje.getTipo());
             System.out.println(excepcion);
             System.out.println(ex.toString());
+        } catch (InterruptedException ex) {
+            String excepcion =String.format("Error en la operacion %s Problema con la conexion con el cliente.", mensaje.getTipo());
+            System.out.println(excepcion);
+            System.out.println(ex.toString());
         } catch (IOException ex) {
             String excepcion =String.format("Error en la operacion %s Problema con la conexion con el cliente.", mensaje.getTipo());
             System.out.println(excepcion);
@@ -134,7 +138,7 @@ public class ProcesadorServidor extends Procesador {
         }
     }
 
-    public void usuarioEstado(Mensajes mensaje) throws JsonProcessingException, IOException {
+    public void usuarioEstado(Mensajes mensaje) throws JsonProcessingException, IOException, InterruptedException {
         EstadoUsuario estado = MensajesServidorCliente.convertirCadenaAEstadoUsuario(mensaje.getEstado());
         Mensajes mensajeServidor;
         if (estado == EstadoUsuario.ACTIVE || estado == EstadoUsuario.BUSY || estado == EstadoUsuario.AWAY) {
@@ -148,6 +152,7 @@ public class ProcesadorServidor extends Procesador {
             servidor.cambiaEstadoUsuario(usuario.getNombre(), estado);
             mensajeServidor = MensajesServidorCliente.conTipoMensajeOperacion("STATUS success", TiposMensaje.INFO);
             salida.writeUTF(serializaMensaje(mensajeServidor));
+            this.wait(100);
             mensajeServidor = MensajesServidorCliente.conTipoUsuarioEstado(
                     String.format("NEW_STATUS %s %s", usuario.getNombre(), estado.toString()));
             String mensajeServidorSerializado = serializaMensaje(mensajeServidor);
