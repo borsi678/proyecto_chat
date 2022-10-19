@@ -138,21 +138,22 @@ public class ProcesadorServidor extends Procesador {
         }
     }
 
-    public void usuarioEstado(Mensajes mensaje) throws JsonProcessingException, IOException, InterruptedException {
+    public void usuarioEstado(Mensajes mensaje) throws IOException, InterruptedException {
         EstadoUsuario estado = MensajesServidorCliente.convertirCadenaAEstadoUsuario(mensaje.getEstado());
         Mensajes mensajeServidor;
         if (estado == EstadoUsuario.ACTIVE || estado == EstadoUsuario.BUSY || estado == EstadoUsuario.AWAY) {
             Usuario usuario = servidor.getUsuario(this.socketCliente);
             if (usuario.getEstado() == estado) {
-                String mensajeEnviar = String.format("STATUS %s El estado ya es '%s'", estado.toString());
+                String mensajeEnviar = String.format("STATUS %s El estado ya es '%s'", estado.toString(), estado.toString());
                 mensajeServidor = MensajesServidorCliente.conTipoMensajeOperacionEstado(mensajeEnviar,
                         TiposMensaje.WARNING);
                 return;
             }
             servidor.cambiaEstadoUsuario(usuario.getNombre(), estado);
             mensajeServidor = MensajesServidorCliente.conTipoMensajeOperacion("STATUS success", TiposMensaje.INFO);
+            salida.flush();
             salida.writeUTF(serializaMensaje(mensajeServidor));
-            this.wait(100);
+            salida.flush();
             mensajeServidor = MensajesServidorCliente.conTipoUsuarioEstado(
                     String.format("NEW_STATUS %s %s", usuario.getNombre(), estado.toString()));
             String mensajeServidorSerializado = serializaMensaje(mensajeServidor);

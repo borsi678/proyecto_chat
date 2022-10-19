@@ -222,6 +222,8 @@ public class ProcesadorCliente extends Procesador{
                 cliente.imprimeMensaje(mensajeImprimir);
                 break;      
         }
+        if(mensaje.getOperacion().equals("STATUS"))
+            verificaMensajeEstado(mensaje);
     }
     /**Metodo que se encarga de enviar el mensaje al servidor para pedir la lista de usuarios conectados.
      * El servidor responde con la lista de usuarios conectados.
@@ -233,15 +235,17 @@ public class ProcesadorCliente extends Procesador{
     public void recibeListaUsuariosServidor(String tipo) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente= MensajesServidorCliente.conTipo(tipo);
         salida.writeUTF(serializaMensaje(mensajeCliente));
-        Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
-        if(mensajeServidor.getTipo().equals("USER_LIST") && mensajeServidor.getNombresUsuarios() != null){
-            cliente.imprimeMensaje(mensajeServidor.getNombresUsuarios().toString());
-        }
+        salida.flush();
+    //    Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
+     //   if(mensajeServidor.getTipo().equals("USER_LIST") && mensajeServidor.getNombresUsuarios() != null){
+         //   cliente.imprimeMensaje(mensajeServidor.getNombresUsuarios().toString());
+       // }
     }
    
     /**Metodo que encarga de enviar el mensaje al servidor con el nuevo estado del usuario.
      * El servidor responde si se realizo la operacion o hubo un error.
-     * @param mensaje el mensaje a serializar.
+     * @param mensaje el mensaje a serializar.     //   if(mensajeServidor.getTipo().equals("USER_LIST") && mensajeServidor.getNombresUsuarios() != null){
+
      * @throws ExcepcionSerializa si hubo un error al serializar el mensaje del cliente.
      * @throws ExcepcionDeserializa si hubo un error al deserializar el mensaje del servidor.
      * @throws IOException si hubo un error con la conexion.
@@ -250,14 +254,14 @@ public class ProcesadorCliente extends Procesador{
         Mensajes mensajeCliente=MensajesServidorCliente.conTipoEstado(mensaje);
         Mensajes mensajeServidor;
         salida.writeUTF(serializaMensaje(mensajeCliente));
-        System.out.println("Antes2");
-        String mensajeServidorSerializado=entrada.readUTF();
-        mensajeServidor=deserializaMensaje(mensajeServidorSerializado);
-        String estado=mensajeCliente.getEstado();
-        System.out.println("Antes");
+        salida.flush();
+
+    }
+    
+    public void verificaMensajeEstado(Mensajes mensajeServidor){
+        String estado=mensajeServidor.getEstado();
         if(mensajeServidor.getTipo().equals("INFO") && mensajeServidor.getOperacion().equals("STATUS")
                 ){
-            System.out.println("CAmbiando");
             EstadoUsuario estadoUsuario= MensajesServidorCliente.convertirCadenaAEstadoUsuario(estado);
             cliente.cambiaEstadoUsuario(estadoUsuario);
             cliente.imprimeMensaje("INFO Estado cambiado satisfactoriamente.");
