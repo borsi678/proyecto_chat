@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -23,10 +24,7 @@ public class Servidor {
 
     public void iniciaServidor() {
         try {
-            Scanner scanner = new Scanner(System.in);
-            System.out.println("Introduce el puerto para el servidor");
-            int puerto = scanner.nextInt();
-            ServerSocket socketServidor = new ServerSocket(puerto);
+            ServerSocket socketServidor = new ServerSocket(8999);
             System.out.println("Iniciando servidor...");
             estableceConexionCliente(socketServidor);
         } catch (IOException ex) {
@@ -43,7 +41,8 @@ public class Servidor {
                 ProcesadorServidor procesadorServidor = new ProcesadorServidor(this, socketCliente);
                 procesadorServidor.start();
 
-            } catch (IOException ex) {
+            }
+            catch (IOException ex) {
                 System.out.println("No se pudo establecer conexion con el cliente\n Reintentando...");
                 estableceConexionCliente(socketServidor);
             }
@@ -115,9 +114,14 @@ public class Servidor {
 
     public void transmiteMensajePrivado(String mensaje, Usuario usuario) throws IOException{
         Socket clienteConectado = diccSocketsUsuarios.get(usuario);
-        DataOutputStream salida=new DataOutputStream(clienteConectado.getOutputStream());
-        salida.writeUTF(mensaje);
+        try{
 
+            DataOutputStream salida=new DataOutputStream(clienteConectado.getOutputStream());
+            salida.writeUTF(mensaje);
+        }catch(SocketException ex){
+            diccSocketsUsuarios.remove(usuario, clienteConectado);
+            ///PENDIENTE
+        }
     }
     
     public void cambiaEstadoUsuario(String nombreUsuario, EstadoUsuario estado){

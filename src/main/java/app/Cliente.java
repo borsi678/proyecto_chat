@@ -18,12 +18,13 @@ public class Cliente {
     }
 
     public void iniciaCliente() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Introduce la direccion IP del servidor");
-        String direccionIP = scanner.nextLine();
-        System.out.println("Introduce puerto del servidor");
-        int puerto = scanner.nextInt();
-        estableceConexionServidor(direccionIP, puerto);
+//        Scanner scanner = new Scanner(System.in);
+//        System.out.println("Introduce la direccion IP del servidor");
+//        String direccionIP = scanner.nextLine();
+//        System.out.println("Introduce puerto del servidor");
+//        int puerto = scanner.nextInt();
+//        estableceConexionServidor(direccionIP, puerto);
+        estableceConexionServidor("localhost", 8999);
         System.out.println("¡Bienvenido al chat!");
         escrituraMensajesUsuario();
     }
@@ -43,7 +44,7 @@ public class Cliente {
     
     public void escrituraMensajesUsuario(){
         String mensaje="";
-        while(!(mensaje.equals("DISCONNECT"))){
+        while(!(mensaje.equals("DISCONNECT")) || !(mensaje.equals("^C"))){
             
                 System.out.print("Escribe mensaje:");
                 mensaje=scanner.nextLine();

@@ -9,6 +9,7 @@ import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import app.ExcepcionMensajeInvalido;
+import java.io.EOFException;
 /**
  * <p> Clase que extiende de Procesador para impelemtar el comportamiento del Cliente</p>
  * 
@@ -86,6 +87,10 @@ public class ProcesadorCliente extends Procesador{
                 mensajeServidor=entrada.readUTF();
                 mensaje=deserializaMensaje(mensajeServidor);
                 mensajesRecibidos(mensaje);
+            }catch(EOFException ex){
+                System.out.println("Se perdion la conexion con el sevidor"); 
+                return;
+                //HACER PARA HACER UNA NUEVA CONEXION A UN NUEVO SERVIDOR REFACTORIZAR
             } catch (IOException ex) {
                 Logger.getLogger(ProcesadorCliente.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -203,7 +208,7 @@ public class ProcesadorCliente extends Procesador{
                 break;
             case "JOINED_ROOM":
                 mensajeImprimir=String.format("[%s] El usuario '%s' se ha unido a la sala.", 
-                        mensaje.getNombreCuarto(),mensaje.getNombreUsuario());
+                        mensaje.getNombreCuarto(), mensaje.getNombreUsuario());
                 cliente.imprimeMensaje(mensajeImprimir);
                 break;
             case "ROOM_MESSAGE_FROM":
@@ -222,8 +227,34 @@ public class ProcesadorCliente extends Procesador{
                 cliente.imprimeMensaje(mensajeImprimir);
                 break;      
         }
-        if(mensaje.getOperacion().equals("STATUS"))
-            verificaMensajeEstado(mensaje);
+        if(mensaje.getOperacion() != null){
+            switch(mensaje.getOperacion().toUpperCase()){
+                case "STATUS":
+                    procesaMensajeEstado(mensaje);
+                    break;
+                case "MESSAGE":    
+                    procesaMensajePrivado(mensaje);
+                    break;
+                case "NEW_ROOM": 
+                    procesaMensajeNuevoCuarto(mensaje);
+                    break;
+                case "JOIN_ROOM":   
+                    procesaMensajeUnirseCuarto(mensaje);
+                    break;
+                case "ROOM_USERS":
+                    procesaMensajeUsuariosCuarto(mensaje);
+                    break;
+                case "LEAVE_ROOM":
+                    procesaMensajeAbandonaCuarto(mensaje);
+                    break;
+                case "INVITE":
+                    procesaMensajeInvitaUsuariosCuarto(mensaje);
+                    break;
+                case "ROOM_MESSAGE":
+                    procesaMensajeCuarto(mensaje);
+                   break;
+            }
+        }
     }
     /**Metodo que se encarga de enviar el mensaje al servidor para pedir la lista de usuarios conectados.
      * El servidor responde con la lista de usuarios conectados.
@@ -236,10 +267,6 @@ public class ProcesadorCliente extends Procesador{
         Mensajes mensajeCliente= MensajesServidorCliente.conTipo(tipo);
         salida.writeUTF(serializaMensaje(mensajeCliente));
         salida.flush();
-    //    Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
-     //   if(mensajeServidor.getTipo().equals("USER_LIST") && mensajeServidor.getNombresUsuarios() != null){
-         //   cliente.imprimeMensaje(mensajeServidor.getNombresUsuarios().toString());
-       // }
     }
    
     /**Metodo que encarga de enviar el mensaje al servidor con el nuevo estado del usuario.
@@ -255,20 +282,16 @@ public class ProcesadorCliente extends Procesador{
         Mensajes mensajeServidor;
         salida.writeUTF(serializaMensaje(mensajeCliente));
         salida.flush();
-
+        EstadoUsuario estadoUsuario= MensajesServidorCliente.
+                    convertirCadenaAEstadoUsuario(mensajeCliente.getEstado());
+        cliente.cambiaEstadoUsuario(estadoUsuario);
     }
     
-    public void verificaMensajeEstado(Mensajes mensajeServidor){
-        String estado=mensajeServidor.getEstado();
-        if(mensajeServidor.getTipo().equals("INFO") && mensajeServidor.getOperacion().equals("STATUS")
-                ){
-            EstadoUsuario estadoUsuario= MensajesServidorCliente.convertirCadenaAEstadoUsuario(estado);
-            cliente.cambiaEstadoUsuario(estadoUsuario);
+    public void procesaMensajeEstado(Mensajes mensajeServidor){
+        if(mensajeServidor.getTipo().equals("INFO") && mensajeServidor.getOperacion().equals("STATUS")){
             cliente.imprimeMensaje("INFO Estado cambiado satisfactoriamente.");
             return;
-        } else if(mensajeServidor.getTipo().equals("WARNING") && mensajeServidor.getOperacion().equals("STATUS")
-                && mensajeServidor.getMensaje().equals("El estado ya es \'"+estado+"\'")
-                && mensajeServidor.getEstado().equals(estado)){
+        } else if(mensajeServidor.getTipo().equals("WARNING") && mensajeServidor.getOperacion().equals("STATUS")){
             cliente.imprimeMensaje(mensajeServidor.getMensaje());
             return;
         }
@@ -285,14 +308,12 @@ public class ProcesadorCliente extends Procesador{
     public void enviaMensajePrivado(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente=MensajesServidorCliente.conTipoUsuarioMensaje(mensaje);
         salida.writeUTF(serializaMensaje(mensajeCliente));
-        String mensajeServidorSerializado=entrada.readUTF();
-        if(mensajeServidorSerializado != null || !(mensajeServidorSerializado.equals(""))){
-            Mensajes mensajeServidor=deserializaMensaje(mensajeServidorSerializado);
-            if(mensajeServidor.getTipo().equals("WARNING") && 
-                    mensajeServidor.getOperacion().equals("MESSAGE") &&
-                    mensajeServidor.getNombreUsuario().equals(mensajeCliente.getNombreUsuario()) &&
-                    mensajeServidor.getMensaje().equals("El usuario "+mensajeCliente.getNombreUsuario()+" no existe") )
-               cliente.imprimeMensaje(mensajeServidor.getTipo()+mensajeServidor.getMensaje());
+        salida.flush();
+    }
+    
+    public void procesaMensajePrivado(Mensajes mensajeServidor){
+        if(mensajeServidor.getTipo().equals("WARNING")){
+                cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
         }
     }
     
@@ -306,6 +327,7 @@ public class ProcesadorCliente extends Procesador{
     public void enviaMensajePublico(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeServidor=MensajesServidorCliente.conTipoMensaje(mensaje);
         salida.writeUTF(serializaMensaje(mensajeServidor));
+        salida.flush();
     }
     
     /**Metodo que se encarga de enviar un mensaje al servidor para crear un cuarto, el mensaje 
@@ -319,16 +341,14 @@ public class ProcesadorCliente extends Procesador{
     public void creaNuevoCuarto(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuarto(mensaje);
         salida.writeUTF(serializaMensaje(mensajeCliente));
-        Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
-        String nombreCuarto=mensajeCliente.getNombreCuarto();
+        salida.flush();
+    }
+    
+    public void procesaMensajeNuevoCuarto(Mensajes mensajeServidor){
         if(mensajeServidor.getTipo().equals("INFO") 
-                && mensajeServidor.getOperacion().equals("NEW_ROOM")
                 && mensajeServidor.getMensaje().equals("success")){
             cliente.imprimeMensaje("Cuarto creado satisfactoriamente");
-        } else if(mensajeServidor.getTipo().equals("WARINIG")
-                && mensajeServidor.getOperacion().equals("NEW_ROOM")
-                && mensajeServidor.getNombreCuarto().equals(nombreCuarto)
-                && mensajeServidor.getMensaje().equals("El cuarto '"+nombreCuarto+" ya existe"))
+        } else if(mensajeServidor.getTipo().equals("WARNING"))
             cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
     }
     
@@ -343,20 +363,17 @@ public class ProcesadorCliente extends Procesador{
     public void unirseCuarto(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuarto(mensaje);
         salida.writeUTF(serializaMensaje(mensajeCliente));
-        Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
-        String nombreCuarto=mensajeCliente.getNombreCuarto();
+        salida.flush();
+    }
+    
+    public void procesaMensajeUnirseCuarto(Mensajes mensajeServidor){
         if(mensajeServidor.getTipo().equals("INFO") 
-                && mensajeServidor.getOperacion().equals("JOIN_ROOM")
-                && mensajeServidor.getNombreCuarto().equals(nombreCuarto)
                 && mensajeServidor.getMensaje().equals("success")){
             cliente.imprimeMensaje("INFO Se ha unido a la sala satisfactoraimente");
-        } else if(mensajeServidor.getTipo().equals("WARINIG")
-                && mensajeServidor.getOperacion().equals("JOIN_ROOM")
-                && mensajeServidor.getNombreCuarto().equals(nombreCuarto)){
+        } else if(mensajeServidor.getTipo().equals("WARNING")){
             cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());           
         }
     }
-    
     /** Metodo que se encarga de pedir la lista de usuarios de una sala determinda
      * Si la sala existe y el usuario esta unido a ella el servidor responde con la lista de usuarios, si no el 
      * servidor responde con un error.
@@ -369,14 +386,12 @@ public class ProcesadorCliente extends Procesador{
     public void recibeUsuariosCuarto(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuarto(mensaje);
         salida.writeUTF(serializaMensaje(mensajeCliente));
-        Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
-        String nombreCuarto=mensajeCliente.getNombreCuarto();
-        if(mensajeServidor.getTipo().equals("ROOM_USER_LIST"))
-            cliente.imprimeMensaje(mensajeServidor.getNombresUsuarios().toString());
-        else if(mensajeServidor.getTipo().equals("WARNING")
-                && mensajeServidor.getOperacion().equals("ROOM_USERS")
-                && mensajeServidor.getNombreCuarto().equals(nombreCuarto))
-            cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
+        salida.flush();
+    }
+    
+    public void procesaMensajeUsuariosCuarto(Mensajes mensajeServidor){
+        if(mensajeServidor.getTipo().equals("WARNING"))
+                cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
     }
     
     /**
@@ -390,16 +405,14 @@ public class ProcesadorCliente extends Procesador{
     public void abandonaCuarto(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuarto(mensaje);
         salida.writeUTF(serializaMensaje(mensajeCliente));
-        Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
-        String nombreCuarto=mensajeCliente.getNombreCuarto();
+        salida.flush();
+    }
+    
+    public void procesaMensajeAbandonaCuarto(Mensajes mensajeServidor){
         if(mensajeServidor.getTipo().equals("INFO") 
-                && mensajeServidor.getOperacion().equals("LEAVE_ROOM")
-                && mensajeServidor.getNombreCuarto().equals(nombreCuarto)
                 && mensajeServidor.getMensaje().equals("success"))
             cliente.imprimeMensaje("INFO Se ha abandoando el cuarto satisfactoriamente");
-        else if(mensajeServidor.getTipo().equals("WARNING")
-                && mensajeServidor.getOperacion().equals("LEAVE_ROOM")
-                && mensajeServidor.getNombreCuarto().equals(nombreCuarto))
+        else if(mensajeServidor.getTipo().equals("WARNING"))
             cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
     }
     
@@ -414,15 +427,14 @@ public class ProcesadorCliente extends Procesador{
     public void invitaUsuariosCuarto(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuartoUsuarios(mensaje);
         salida.writeUTF(serializaMensaje(mensajeCliente));
-        Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
-        String nombreCuarto=mensajeCliente.getNombreCuarto();
+        salida.flush();
+    }
+    
+    public void procesaMensajeInvitaUsuariosCuarto(Mensajes mensajeServidor){
         if(mensajeServidor.getTipo().equals("INFO") 
-                && mensajeServidor.getOperacion().equals("INVITE")
-                && mensajeServidor.getNombreCuarto().equals(nombreCuarto)
                 && mensajeServidor.getMensaje().equals("success"))
             cliente.imprimeMensaje("INFO Se ha invitado a todos los usuarios al cuarto satisfactoriamente");
-        else if(mensajeServidor.getTipo().equals("WARNING")
-                && mensajeServidor.getOperacion().equals("INVITE")){
+        else if(mensajeServidor.getTipo().equals("WARNING")){
                 cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
         }
     }
@@ -438,11 +450,11 @@ public class ProcesadorCliente extends Procesador{
     public void enviaMensajeCuarto(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuartoMensaje(mensaje);
         salida.writeUTF(serializaMensaje(mensajeCliente));
-        Mensajes mensajeServidor=deserializaMensaje(entrada.readUTF());
-        String nombreCuarto=mensajeCliente.getNombreCuarto();
-        if(mensajeServidor.getTipo().equals("WARNING") 
-                && mensajeServidor.getOperacion().equals("ROOM_MESSAGE")
-                && mensajeServidor.getNombreCuarto().equals(nombreCuarto))
+        salida.flush();
+    }
+    
+    public void procesaMensajeCuarto(Mensajes mensajeServidor){
+        if(mensajeServidor.getTipo().equals("WARNING"))
             cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
     }
 }

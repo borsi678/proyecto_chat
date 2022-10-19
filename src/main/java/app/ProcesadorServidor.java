@@ -9,6 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import java.io.EOFException;
 
 public class ProcesadorServidor extends Procesador {
 
@@ -32,6 +33,8 @@ public class ProcesadorServidor extends Procesador {
             String nombreCliente = entrada.readUTF();
             procesaNuevaConexion(nombreCliente);
             recibeMensajesCliente();
+        }catch(EOFException ex){
+            System.out.println("Error al hacer conexion con el cliente");
         } catch (IOException ex) {
             Logger.getLogger(ProcesadorServidor.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -59,6 +62,7 @@ public class ProcesadorServidor extends Procesador {
         this.servidor.transmiteMensajeClientes(serializaMensaje(mensaje));
         this.servidor.agregaSocketCliente(usuarioCliente, this.socketCliente);
     }
+    
     public void recibeMensajesCliente() {
         String mensajeClienteSerializado = "";
         Mensajes mensajeCliente;
@@ -147,11 +151,11 @@ public class ProcesadorServidor extends Procesador {
                 String mensajeEnviar = String.format("STATUS %s El estado ya es '%s'", estado.toString(), estado.toString());
                 mensajeServidor = MensajesServidorCliente.conTipoMensajeOperacionEstado(mensajeEnviar,
                         TiposMensaje.WARNING);
+                salida.writeUTF(serializaMensaje(mensajeServidor));
                 return;
             }
             servidor.cambiaEstadoUsuario(usuario.getNombre(), estado);
             mensajeServidor = MensajesServidorCliente.conTipoMensajeOperacion("STATUS success", TiposMensaje.INFO);
-            salida.flush();
             salida.writeUTF(serializaMensaje(mensajeServidor));
             salida.flush();
             mensajeServidor = MensajesServidorCliente.conTipoUsuarioEstado(
@@ -177,9 +181,11 @@ public class ProcesadorServidor extends Procesador {
             servidor.transmiteMensajePrivado(serializaMensaje(mensaje), usuarioReceptor);
             return;
         }
-        String mensajeEnviar=String.format("MESSAGE %s El usuario '%s' no existe", mensaje.getNombreUsuario());
+        String mensajeEnviar=String.format("MESSAGE %s El usuario '%s' no existe", mensaje.getNombreUsuario(),
+                mensaje.getNombreUsuario());
         Mensajes mensajeServidor=MensajesServidorCliente.conTIpoMensajeOperacionUsuario(mensajeEnviar, 
                 TiposMensaje.WARNING);
+        salida.writeUTF(serializaMensaje(mensajeServidor));
     }
     
     public void mensajePublico(Mensajes mensaje) throws JsonProcessingException, IOException{
@@ -199,7 +205,7 @@ public class ProcesadorServidor extends Procesador {
             salida.writeUTF(serializaMensaje(mensajeServidor));
             return;
         }
-        String mensajeEnviar=String.format("NEW_ROOM %s El cuarto '%s' ya existe", nombreCuarto);
+        String mensajeEnviar=String.format("NEW_ROOM %s El cuarto '%s' ya existe", nombreCuarto, nombreCuarto);
         Mensajes mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar, 
                 TiposMensaje.WARNING);
         salida.writeUTF(serializaMensaje(mensajeServidor));
@@ -221,7 +227,7 @@ public class ProcesadorServidor extends Procesador {
                     return;
                 }
             }
-            mensajeEnviar=String.format("INVITATION %s %s % te invita al cuarto '%s'", usuarioCliente.getNombre()
+            mensajeEnviar=String.format("INVITATION %s %s %s te invita al cuarto '%s'", usuarioCliente.getNombre()
             , nombreCuarto, usuarioCliente.getNombre(), nombreCuarto);
             mensajeServidor=MensajesServidorCliente.conTipoMensajeUsuarioNombreCuarto(mensajeEnviar);
             Usuario usuarioInvitado;
@@ -237,7 +243,7 @@ public class ProcesadorServidor extends Procesador {
             salida.writeUTF(serializaMensaje(mensajeServidor));
             return;
         }
-        mensajeEnviar=String.format("INVITE %s El cuarto '%s' no existe", nombreCuarto);
+        mensajeEnviar=String.format("INVITE %s El cuarto '%s' no existe", nombreCuarto, nombreCuarto);
         mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar, 
                 TiposMensaje.WARNING);
     }
@@ -249,7 +255,7 @@ public class ProcesadorServidor extends Procesador {
         if(servidor.contieneCuarto(nombreCuarto) && servidor.estaUsuarioInvitadoACuarto(usuarioCliente, 
                 nombreCuarto)){
             if(servidor.estaUsuarioUnidoACuarto(usuarioCliente, nombreCuarto)){
-                mensajeEnviar=String.format("JOIN_ROOM %s El usuario ya se unio al cuarto '%s'", nombreCuarto);
+                mensajeEnviar=String.format("JOIN_ROOM %s El usuario ya se unio al cuarto '%s'", nombreCuarto, nombreCuarto);
                 mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar, 
                         TiposMensaje.WARNING);
                 salida.writeUTF(serializaMensaje(mensajeServidor));
@@ -263,19 +269,20 @@ public class ProcesadorServidor extends Procesador {
             mensajeEnviar=String.format("JOIN_ROOM %s success", nombreCuarto);
             mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar,
                     TiposMensaje.INFO);
-            return;
-        }
-        if(!(servidor.estaUsuarioInvitadoACuarto(usuarioCliente, nombreCuarto))){
-                mensajeEnviar=String.format("JOIN_ROOM %s El usuario no ha sido invitado al cuarto", nombreCuarto);
-                mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar, 
-                        TiposMensaje.WARNING);
-                salida.writeUTF(serializaMensaje(mensajeServidor));
-                return;
+        }else if(!(servidor.contieneCuarto(nombreCuarto))){
+            mensajeEnviar=String.format("JOIN_ROOM %s El cuarto '%s' no existe", nombreCuarto, nombreCuarto);
+            mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar
+                    , TiposMensaje.WARNING);
+            salida.writeUTF(serializaMensaje(mensajeServidor));
+            salida.flush();
+        }else if(!(servidor.estaUsuarioInvitadoACuarto(usuarioCliente, nombreCuarto))){
+            mensajeEnviar=String.format("JOIN_ROOM %s El usuario no ha sido invitado al cuarto", nombreCuarto);
+            mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar, 
+                    TiposMensaje.WARNING);
+            salida.writeUTF(serializaMensaje(mensajeServidor));
+            salida.flush();
             }
-        mensajeEnviar=String.format("JOIN_ROOM %s El cuarto '%s' no existe", nombreCuarto);
-        mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar
-                , TiposMensaje.WARNING);
-        salida.writeUTF(serializaMensaje(mensajeServidor));
+
     }
     
     public void usuariosCuarto(Mensajes mensaje) throws JsonProcessingException, IOException{
@@ -293,12 +300,12 @@ public class ProcesadorServidor extends Procesador {
             mensajeServidor= MensajesServidorCliente.conTipoUsuarios("ROOM_USER_LIST", usuariosCuarto);
             salida.writeUTF(serializaMensaje(mensajeServidor));
         } else if(!(servidor.contieneCuarto(nombreCuarto))){
-            mensajeEnviar= String.format("ROOM_USERS %s El cuarto '%s' no existe",nombreCuarto);
+            mensajeEnviar= String.format("ROOM_USERS %s El cuarto '%s' no existe",nombreCuarto, nombreCuarto);
             mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar,
                     TiposMensaje.WARNING);
             salida.writeUTF(serializaMensaje(mensajeServidor));
         } else {
-            mensajeEnviar=String.format("ROOM_USERS %s EL usuario no se ha unido al cuarto '%s'", nombreCuarto);
+            mensajeEnviar=String.format("ROOM_USERS %s EL usuario no se ha unido al cuarto '%s'", nombreCuarto, nombreCuarto);
             mensajeServidor= MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar,
                     TiposMensaje.WARNING);
             salida.writeUTF(serializaMensaje(mensajeServidor));
@@ -317,12 +324,12 @@ public class ProcesadorServidor extends Procesador {
             mensajeServidor = MensajesServidorCliente.conTipoNombreCuartoUsuarioMensaje(mensajeEnviar);
             servidor.transmiteMensajeACuarto(serializaMensaje(mensajeServidor), nombreCuarto);
         }else if(!(servidor.contieneCuarto(nombreCuarto))){
-            mensajeEnviar= String.format("ROOM_MESSAGE %s El cuarto '%s' no existe",nombreCuarto);
+            mensajeEnviar= String.format("ROOM_MESSAGE %s El cuarto '%s' no existe",nombreCuarto, nombreCuarto);
             mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar,
                     TiposMensaje.WARNING);
             salida.writeUTF(serializaMensaje(mensajeServidor));
         } else {
-            mensajeEnviar=String.format("ROOM_MESSAGE %s EL usuario no se ha unido al cuarto '%s'", nombreCuarto);
+            mensajeEnviar=String.format("ROOM_MESSAGE %s EL usuario no se ha unido al cuarto '%s'", nombreCuarto, nombreCuarto);
             mensajeServidor= MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar,
                     TiposMensaje.WARNING);
             salida.writeUTF(serializaMensaje(mensajeServidor));
@@ -344,12 +351,12 @@ public class ProcesadorServidor extends Procesador {
             mensajeServidor=MensajesServidorCliente.conTipoNombreCuartoUsuario(mensajeEnviar);
             servidor.transmiteMensajeACuarto(serializaMensaje(mensajeServidor), nombreCuarto);
         }else if(!(servidor.contieneCuarto(nombreCuarto))){
-            mensajeEnviar= String.format("LEAVE_ROOM %s El cuarto '%s' no existe",nombreCuarto);
+            mensajeEnviar= String.format("LEAVE_ROOM %s El cuarto '%s' no existe",nombreCuarto, nombreCuarto);
             mensajeServidor=MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar,
                     TiposMensaje.WARNING);
             salida.writeUTF(serializaMensaje(mensajeServidor));
         } else {
-            mensajeEnviar=String.format("LEAVE_ROOM %s EL usuario no se ha unido al cuarto '%s'", nombreCuarto);
+            mensajeEnviar=String.format("LEAVE_ROOM %s EL usuario no se ha unido al cuarto '%s'", nombreCuarto, nombreCuarto);
             mensajeServidor= MensajesServidorCliente.conTipoMensajeOperacionNombreCuarto(mensajeEnviar,
                     TiposMensaje.WARNING);
             salida.writeUTF(serializaMensaje(mensajeServidor));
