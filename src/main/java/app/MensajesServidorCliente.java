@@ -47,6 +47,8 @@ public class MensajesServidorCliente {
 
     public static Mensajes conTipoEstado(String mensaje){
         String[] argumentosMensaje = mensaje.split(" ");
+        if(argumentosMensaje.length<2)
+            throw new ExcepcionEstadoInvalido();
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaATipoMensaje(argumentosMensaje[0]);
         if(operacion == TiposMensaje.INVALID)
@@ -206,7 +208,7 @@ public class MensajesServidorCliente {
 
     public static Mensajes conTipoNombreCuartoUsuarios(String mensaje){
         String[] argumentosMensaje = mensaje.split(" ");
-        if(argumentosMensaje.length < 2)
+        if(argumentosMensaje.length < 3)
             throw new ExcepcionMensajeInvalido("Falta nombre de cuarto o nombres de los usuarios"); 
         constructor.vacia();
         TiposMensaje operacion = convertirCadenaATipoMensaje(argumentosMensaje[0]);

@@ -49,7 +49,10 @@ public class ProcesadorCliente extends Procesador{
             Mensajes mensajeServidor=deserializaMensaje(mensajeServidorSerializado);
             cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
             Scanner scanner = new Scanner(System.in);
-            String nombre=scanner.nextLine();
+            String nombre="";
+            while(nombre.equals("")){
+                    nombre=scanner.nextLine();
+            }
             Mensajes mensajeCliente=MensajesServidorCliente.conTipoUsuario(String.format("IDENTIFY %s", nombre));
             salida.writeUTF(serializaMensaje(mensajeCliente));
             mensajeServidorSerializado=entrada.readUTF();
@@ -57,7 +60,8 @@ public class ProcesadorCliente extends Procesador{
             if(mensajeServidor.getTipo().equals("INFO") 
                     && mensajeServidor.getOperacion().equals("IDENTIFY")){
                 cliente.imprimeMensaje("INFO Se ha identificado satisfactoriamente");
-                return;
+                Cliente.setNombreUsuario(nombre);
+                Cliente.cambiaEstadoConexion(true);
             }
             else if(mensajeServidor.getTipo().equals("WARNING") 
                     && mensajeServidor.getOperacion().equals("IDENTIFY") 
@@ -65,12 +69,11 @@ public class ProcesadorCliente extends Procesador{
                 this.cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
                 this.cliente.imprimeMensaje("Intentalo de nuevo");
                 cliente.iniciaCliente();
-                return;
             }
         } catch(NullPointerException ex){
             throw new ExcepcionMensajeInvalido("Mensaje Invalido");
         } catch (IOException ex) {
-            System.out.println("No se pudo realizar la conexion");
+            Cliente.cambiaEstadoConexion(false);
         }
     }
 
@@ -86,9 +89,9 @@ public class ProcesadorCliente extends Procesador{
                 mensaje=deserializaMensaje(mensajeServidor);
                 mensajesRecibidos(mensaje);
             }catch(EOFException ex){
-                System.out.println("Se perdion la conexion con el sevidor"); 
+                System.out.println("\nSe perdio la conexion con el sevidor.\nReiniciando."); 
+                Cliente.cambiaEstadoConexion(false);
                 return;
-                //HACER PARA HACER UNA NUEVA CONEXION A UN NUEVO SERVIDOR REFACTORIZAR
             } catch (IOException ex) {
                 Logger.getLogger(ProcesadorCliente.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -142,23 +145,26 @@ public class ProcesadorCliente extends Procesador{
                         break;
                     default:
                         System.out.println("No ingreso una opcion valida, intentalo de nuevo.");
-                        return;
             }
 
         } catch(ArrayIndexOutOfBoundsException ex){
             System.out.println("Error en la operacion "+argumentoMensaje[0]);
             System.out.println("Faltan argumentos, intentalo de nuevo");
+            System.out.println("Escribe operacion:");
         } catch(ExcepcionMensajeInvalido ex){
             System.out.println("Error en la operacion "+argumentoMensaje[0]);
             System.out.println(ex.toString());
             System.out.println("Ingrese un mensaje valido");
+            System.out.println("Escribe operacion:");
         }catch(ExcepcionEstadoInvalido ex){
             System.out.println("Error en la operacion "+argumentoMensaje[0]);
-            System.out.println(ex.toString());
+            System.out.println("Falta el estado o es un estado invalido.");
             System.out.println("Ingrese un estado valido");
+            System.out.println("Escribe operacion:");
         }catch(ExcepcionDeserializa ex){
             System.out.println("Error en la operacion "+argumentoMensaje[0]);
             System.out.println(ex.toString());
+            System.out.println("Escribe operacion:");
         }catch(ExcepcionSerializa ex){
             System.out.println("Error en la operacion "+argumentoMensaje[0]);
             System.out.println(ex.toString());
@@ -166,6 +172,7 @@ public class ProcesadorCliente extends Procesador{
                 System.out.println("Error al procesar el mensaje");
                 System.out.println(ex.toString());
                 System.out.println("Intentelo de nuevo");
+                System.out.println("Escribe operacion:");
         }
             
     }
@@ -179,52 +186,51 @@ public class ProcesadorCliente extends Procesador{
         String mensajeImprimir;
         switch(mensaje.getTipo().toUpperCase()){
             case "NEW_USER":
-                cliente.imprimeMensaje("INFO Se ha conectado al servidor el usuario: "+mensaje.getNombreUsuario());
+                cliente.imprimeMensaje("\nINFO Se ha conectado al servidor el usuario: "+mensaje.getNombreUsuario());
                 break;
             case "NEW_STATUS": 
-                cliente.imprimeMensaje("INFO El usuario '"+mensaje.getNombreUsuario()+
+                cliente.imprimeMensaje("\nINFO El usuario '"+mensaje.getNombreUsuario()+
                     "' ha cambiado el estado a "+mensaje.getEstado());
                 break;
             case "USER_LIST":   
-                cliente.imprimeMensaje("[General] Lista de usuarios conectados: "
+                cliente.imprimeMensaje("\n[General] Lista de usuarios conectados: "
                     +mensaje.usuariosToString());
                 break;
             case "ROOM_USER_LIST":    
-                mensajeImprimir=String.format("[%s] Lista de usuarios conectados a la sala: %s"
-                        , mensaje.getNombreCuarto(), mensaje.getNombresUsuarios().toString());
+                mensajeImprimir=String.format("\nLista de usuarios conectados a la sala: %s", mensaje.usuariosToString());
                 cliente.imprimeMensaje(mensajeImprimir);
                 break;
             case "MESSAGE_FROM":
-                mensajeImprimir=String.format("[Mensaje Privado][%s] %s", mensaje.getNombreUsuario()
+                mensajeImprimir=String.format("\n[Mensaje Privado][%s] %s", mensaje.getNombreUsuario()
                 , mensaje.getMensaje());
                 cliente.imprimeMensaje(mensajeImprimir);
                 break;
             case "PUBLIC_MESSAGE_FROM":    
-                mensajeImprimir=String.format("[General][%s] %s", mensaje.getNombreUsuario()
+                mensajeImprimir=String.format("\n[General][%s] %s", mensaje.getNombreUsuario()
                 , mensaje.getMensaje());
                 cliente.imprimeMensaje(mensajeImprimir);
                 break;
             case "INVITATION":    
-                mensajeImprimir=String.format("[Invitacion] %s", mensaje.getMensaje());
+                mensajeImprimir=String.format("\n[Invitacion] %s", mensaje.getMensaje());
                 cliente.imprimeMensaje(mensajeImprimir);
                 break;
             case "JOINED_ROOM":
-                mensajeImprimir=String.format("[%s] El usuario '%s' se ha unido a la sala.", 
+                mensajeImprimir=String.format("\n[%s] El usuario %s se ha unido a la sala.", 
                         mensaje.getNombreCuarto(), mensaje.getNombreUsuario());
                 cliente.imprimeMensaje(mensajeImprimir);
                 break;
             case "ROOM_MESSAGE_FROM":
-                mensajeImprimir=String.format("[%s][%s] %s", mensaje.getNombreCuarto(),
+                mensajeImprimir=String.format("\n[%s][%s] %s", mensaje.getNombreCuarto(),
                         mensaje.getNombreUsuario(), mensaje.getMensaje());
                 cliente.imprimeMensaje(mensajeImprimir);
                 break;
             case "LEFT_ROOM":   
-                mensajeImprimir=String.format("[%s] El usuario ' %s' a salido del cuarto", 
-                        mensaje.getNombreCuarto(), mensaje.getMensaje());
+                mensajeImprimir=String.format("\n[%s] El usuario '%s' a salido del cuarto", 
+                        mensaje.getNombreCuarto(), mensaje.getNombreUsuario());
                 cliente.imprimeMensaje(mensajeImprimir);
                 break;
             case "DISCONNECTED":         
-                mensajeImprimir=String.format("[General] El usuario ' %s' a salido del cuarto", 
+                mensajeImprimir=String.format("\n[General] El usuario ' %s' a salido del cuarto", 
                         mensaje.getNombreUsuario());
                 cliente.imprimeMensaje(mensajeImprimir);
                 break;      
@@ -257,6 +263,7 @@ public class ProcesadorCliente extends Procesador{
                    break;
             }
         }
+        System.out.print("Escribe operacion:");
     }
     /**Metodo que se encarga de enviar el mensaje al servidor para pedir la lista de usuarios conectados.
      * El servidor responde con la lista de usuarios conectados.
@@ -281,7 +288,6 @@ public class ProcesadorCliente extends Procesador{
      */
     public void cambiaEstado(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente=MensajesServidorCliente.conTipoEstado(mensaje);
-        Mensajes mensajeServidor;
         salida.writeUTF(serializaMensaje(mensajeCliente));
         salida.flush();
         EstadoUsuario estadoUsuario= MensajesServidorCliente.
@@ -309,7 +315,7 @@ public class ProcesadorCliente extends Procesador{
     */
     public void enviaMensajePrivado(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente=MensajesServidorCliente.conTipoUsuarioMensaje(mensaje);
-        if(mensajeCliente.getMensaje().equals(""))
+        if(mensajeCliente.getMensaje().equals("") || mensajeCliente.getNombreUsuario().equals(Cliente.getNombreUsuario()))
             throw new ExcepcionMensajeInvalido();
         salida.writeUTF(serializaMensaje(mensajeCliente));
         salida.flush();
@@ -432,6 +438,8 @@ public class ProcesadorCliente extends Procesador{
      */
     public void invitaUsuariosCuarto(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuartoUsuarios(mensaje);
+        if(mensajeCliente.usuariosToString().contains(Cliente.getNombreUsuario()))
+            throw new ExcepcionMensajeInvalido("No se puede enviar la invitacion a si mismo.");
         salida.writeUTF(serializaMensaje(mensajeCliente));
         salida.flush();
     }

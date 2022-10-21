@@ -100,13 +100,13 @@ public class Mensajes {
     }
     
     public String usuariosToString(){
-        String arregloCadena= "[";
+        String arregloCadena= "";
         if(nombresUsuarios == null || nombresUsuarios.length==0){
-            return "[]";
+            return "";
         }
         for(int i=0; i<nombresUsuarios.length; i++){
             if(i==nombresUsuarios.length-1){
-                arregloCadena+=String.format("%s]", nombresUsuarios[i]);
+                arregloCadena+=String.format("%s.", nombresUsuarios[i]);
                 continue;
             }
             arregloCadena+=String.format("%s, ",nombresUsuarios[i]);
@@ -119,6 +119,7 @@ public class Mensajes {
         return String.format("TIpo : %s,Operacion: %s, Usuario: %s , Nombre Sala : %s, Usuarios: %s Estado: %s, Mensaje: %s", 
                 this.tipo, this.operacion, this.nombreUsuario, this.nombreCuarto, usuariosToString() , this.estado, this.mensaje );
     }
+    
     public boolean estadoValido() throws ExcepcionMensajeInvalido{
         if(this.tipo == null || this.tipo.equals(""))
             throw new ExcepcionMensajeInvalido("Mensaje no valido");

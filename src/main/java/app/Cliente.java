@@ -8,13 +8,15 @@ import java.util.logging.Logger;
 
 public class Cliente {
 
-    private Usuario usuario;
+    private static Usuario usuario;
     private ProcesadorCliente procesador;
     private Scanner scanner;
+    private static boolean conexion;
 
     public Cliente() {
         this.usuario=new Usuario("");
         this.scanner= new Scanner(System.in);
+        Cliente.conexion=false;
     }
 
     public void iniciaCliente() {
@@ -25,8 +27,13 @@ public class Cliente {
 //        int puerto = scanner.nextInt();
 //        estableceConexionServidor(direccionIP, puerto);
         estableceConexionServidor("localhost", 8999);
+        if(Cliente.getConexion() == false){
+            iniciaCliente();
+            return;
+        }
         System.out.println("¡Bienvenido al chat!");
         escrituraMensajesUsuario();
+        iniciaCliente();
     }
     public void estableceConexionServidor(String direccionIP, int puerto){
         try {
@@ -34,7 +41,6 @@ public class Cliente {
             procesador=new ProcesadorCliente(this, socket);
             procesador.iniciaConexion();
             procesador.start();
-            
         } catch (IOException ex) {
             System.out.println(ex.toString());
             iniciaCliente();
@@ -43,24 +49,25 @@ public class Cliente {
     }
     
     public void escrituraMensajesUsuario(){
+        System.out.print("Escribe operacion:");
         String mensaje="";
-        while(!(mensaje.equals("DISCONNECT")) || !(mensaje.equals("^C"))){
-            
-                System.out.print("Escribe mensaje:");
+        while(!(mensaje.equals("DISCONNECT")) || !(mensaje.equals("^C")) || Cliente.getConexion()==true){
                 mensaje=scanner.nextLine();
+                if(Cliente.getConexion()==false)
+                    return;
                 if(mensaje.equals("") || mensaje == null)
                     continue;
                 procesador.menuMensajes(mensaje);
-            
         }
-        
-            procesador.menuMensajes(mensaje);
-            iniciaCliente();
-        
+        procesador.menuMensajes(mensaje);
     }
     
-    public void setNombreUsuario(String nombre){
+    public static void setNombreUsuario(String nombre){
         usuario.setNombre(nombre);
+    }
+    
+    public static String getNombreUsuario(){
+        return usuario.getNombre();  
     }
     
     public void imprimeMensaje(String mensaje){
@@ -69,5 +76,12 @@ public class Cliente {
     
     public void cambiaEstadoUsuario(EstadoUsuario estado ){
         usuario.setEstado(estado);
+    }
+    public static void cambiaEstadoConexion(boolean estado){
+        conexion=estado;
+    }
+    
+    public static boolean getConexion(){
+        return Cliente.conexion;
     }
 }
