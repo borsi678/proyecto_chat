@@ -1,15 +1,13 @@
 package app;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import app.ExcepcionMensajeInvalido;
-import java.io.EOFException;
 /**
  * <p> Clase que extiende de Procesador para impelemtar el comportamiento del Cliente</p>
  * 
@@ -146,7 +144,11 @@ public class ProcesadorCliente extends Procesador{
                         System.out.println("No ingreso una opcion valida, intentalo de nuevo.");
                         return;
             }
-        }catch(ExcepcionMensajeInvalido ex){
+
+        } catch(ArrayIndexOutOfBoundsException ex){
+            System.out.println("Error en la operacion "+argumentoMensaje[0]);
+            System.out.println("Faltan argumentos, intentalo de nuevo");
+        } catch(ExcepcionMensajeInvalido ex){
             System.out.println("Error en la operacion "+argumentoMensaje[0]);
             System.out.println(ex.toString());
             System.out.println("Ingrese un mensaje valido");
@@ -307,6 +309,8 @@ public class ProcesadorCliente extends Procesador{
     */
     public void enviaMensajePrivado(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente=MensajesServidorCliente.conTipoUsuarioMensaje(mensaje);
+        if(mensajeCliente.getMensaje().equals(""))
+            throw new ExcepcionMensajeInvalido();
         salida.writeUTF(serializaMensaje(mensajeCliente));
         salida.flush();
     }
@@ -325,8 +329,10 @@ public class ProcesadorCliente extends Procesador{
      * @throws IOException si hubo un error con la conexion.
      */
     public void enviaMensajePublico(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
-        Mensajes mensajeServidor=MensajesServidorCliente.conTipoMensaje(mensaje);
-        salida.writeUTF(serializaMensaje(mensajeServidor));
+        Mensajes mensajeCliente=MensajesServidorCliente.conTipoMensaje(mensaje);
+        if(mensajeCliente.getMensaje().equals(""))
+            throw new ExcepcionMensajeInvalido();
+        salida.writeUTF(serializaMensaje(mensajeCliente));
         salida.flush();
     }
     
@@ -449,6 +455,8 @@ public class ProcesadorCliente extends Procesador{
      */
     public void enviaMensajeCuarto(String mensaje) throws ExcepcionSerializa, ExcepcionDeserializa, IOException{
         Mensajes mensajeCliente= MensajesServidorCliente.conTipoNombreCuartoMensaje(mensaje);
+        if(mensajeCliente.getMensaje().equals(""))
+            throw new ExcepcionMensajeInvalido();
         salida.writeUTF(serializaMensaje(mensajeCliente));
         salida.flush();
     }
