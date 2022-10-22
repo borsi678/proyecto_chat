@@ -29,7 +29,7 @@ public class ProcesadorTest {
                                 .conNombreUsuario(" Angel")
                                 .conNombresUsuarios(nombres)
                                 .construyeMensaje();
-        String mensajePrueba="{\"type\":\"IDENTIFY\",\"username\":\"Angel\",\"usernames\":[ \"Uno\",\"Dos\",\"Tres\"]}";
+        String mensajePrueba="{\"type\":\" IDENTIFY\",\"username\":\" Angel\",\"usernames\":[\"Uno\",\"Dos\",\"Tres\"]}";
         String mensajeComparar= procesador.serializaMensaje(mensaje); 
         assertEquals(mensajePrueba, mensajeComparar);                       
 
@@ -71,8 +71,5 @@ public class ProcesadorTest {
         
     }
 
-
-    public class ProcesadorImpl extends Procesador {
-    }
     
 }
