@@ -2,6 +2,7 @@ package app;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,16 +22,23 @@ public class Cliente {
 
     public void iniciaCliente() {
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Introduce la direccion IP del servidor");
-        String direccionIP = scanner.nextLine();
-        System.out.println("Introduce puerto del servidor");
-        int puerto = scanner.nextInt();
+        String direccionIP="";
+        int puerto=0;
+        try{
+            System.out.println("Introduce la direccion IP del servidor");
+            direccionIP = scanner.nextLine();
+            System.out.println("Introduce puerto del servidor");
+            puerto = scanner.nextInt();
+        }catch(InputMismatchException ex){
+            System.out.println("Introduce un puerto valido");
+            iniciaCliente();
+            return;
+            }
         estableceConexionServidor(direccionIP, puerto);
-    //    estableceConexionServidor("localhost", 8999);
-        //if(!Cliente.getConexion(){
-        //    iniciaCliente();
-          //  return;
-        //}
+        if(!Cliente.getConexion()){
+            iniciaCliente();
+            return;
+        }
         System.out.println("¡Bienvenido al chat!");
         escrituraMensajesUsuario();
         iniciaCliente();

@@ -45,20 +45,17 @@ public class ProcesadorCliente extends Procesador{
      */
     public void iniciaConexion(){
         try {
-           String mensajeServidorSerializado;//entrada.readUTF();
-           Mensajes mensajeServidor;//deserializaMensaje(mensajeServidorSerializado);
-            //cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
+            System.out.println("Identificate");
             Scanner scanner = new Scanner(System.in);
             String nombre="";
             while(nombre.equals("")){
                     nombre=scanner.nextLine();
             }
             Mensajes mensajeCliente=MensajesServidorCliente.conTipoUsuario(String.format("IDENTIFY %s", nombre));
-            System.out.println(serializaMensaje(mensajeCliente));
             salida.writeUTF(serializaMensaje(mensajeCliente));
             salida.flush();
-            mensajeServidorSerializado=entrada.readUTF();
-            mensajeServidor=deserializaMensaje(mensajeServidorSerializado);
+            String mensajeServidorSerializado=entrada.readUTF();
+            Mensajes mensajeServidor=deserializaMensaje(mensajeServidorSerializado);
             if(mensajeServidor.getTipo().equals("INFO") 
                     && mensajeServidor.getOperacion().equals("IDENTIFY")){
                 cliente.imprimeMensaje("INFO Se ha identificado satisfactoriamente");
@@ -284,8 +281,7 @@ public class ProcesadorCliente extends Procesador{
    
     /**Metodo que encarga de enviar el mensaje al servidor con el nuevo estado del usuario.
      * El servidor responde si se realizo la operacion o hubo un error.
-     * @param mensaje el mensaje a serializar.     //   if(mensajeServidor.getTipo().equals("USER_LIST") && mensajeServidor.getNombresUsuarios() != null){
-
+     * @param mensaje el mensaje a serializar.     
      * @throws ExcepcionSerializa si hubo un error al serializar el mensaje del cliente.
      * @throws ExcepcionDeserializa si hubo un error al deserializar el mensaje del servidor.
      * @throws IOException si hubo un error con la conexion.
@@ -299,6 +295,10 @@ public class ProcesadorCliente extends Procesador{
         cliente.cambiaEstadoUsuario(estadoUsuario);
     }
     
+    /**
+     * Metodo que se encarga de procesar el mensaje del servidor al cambiar el estado del usuario
+     * @param mensajeServidor  el mensaje a procesar del servidor
+     */
     public void procesaMensajeEstado(Mensajes mensajeServidor){
         if(mensajeServidor.getTipo().equals("INFO") && mensajeServidor.getOperacion().equals("STATUS")){
             cliente.imprimeMensaje("INFO Estado cambiado satisfactoriamente.");
@@ -325,6 +325,10 @@ public class ProcesadorCliente extends Procesador{
         salida.flush();
     }
     
+    /**
+     * Metodo que se encarga de procesar el mensaje privado que envia el servidor.
+     * @param mensajeServidor el mensaje a procesar del servidor
+     */
     public void procesaMensajePrivado(Mensajes mensajeServidor){
         if(mensajeServidor.getTipo().equals("WARNING")){
                 cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
@@ -360,6 +364,10 @@ public class ProcesadorCliente extends Procesador{
         salida.flush();
     }
     
+    /**
+     * Metodo que se encarga de procesar el mensaje del servidor al crear un cuarto.
+     * @param mensajeServidor el mensaje a procesar del servidor
+     */
     public void procesaMensajeNuevoCuarto(Mensajes mensajeServidor){
         if(mensajeServidor.getTipo().equals("INFO") 
                 && mensajeServidor.getMensaje().equals("success")){
@@ -382,6 +390,10 @@ public class ProcesadorCliente extends Procesador{
         salida.flush();
     }
     
+    /**
+     * Metodo que se encarga de procesar el mensaje del servidor al uniser a un cuarto.
+     * @param mensajeServidor el mensaje a procesar del servidor 
+     */
     public void procesaMensajeUnirseCuarto(Mensajes mensajeServidor){
         if(mensajeServidor.getTipo().equals("INFO") 
                 && mensajeServidor.getMensaje().equals("success")){
@@ -405,6 +417,10 @@ public class ProcesadorCliente extends Procesador{
         salida.flush();
     }
     
+    /**
+     * Metodo que se encarga de procesar el mensaje del servidor al obtener la lista de usuarios de un cuarto.
+     * @param mensajeServidor el mensaje a procesar del servidor
+     */
     public void procesaMensajeUsuariosCuarto(Mensajes mensajeServidor){
         if(mensajeServidor.getTipo().equals("WARNING"))
                 cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
@@ -424,6 +440,10 @@ public class ProcesadorCliente extends Procesador{
         salida.flush();
     }
     
+    /**
+     * Metodo que se encarga de procesar el mensaje del servidor al abandonar un cuarto.
+     * @param mensajeServidor el mensaje a procesar del servidor
+     */
     public void procesaMensajeAbandonaCuarto(Mensajes mensajeServidor){
         if(mensajeServidor.getTipo().equals("INFO") 
                 && mensajeServidor.getMensaje().equals("success"))
@@ -448,6 +468,10 @@ public class ProcesadorCliente extends Procesador{
         salida.flush();
     }
     
+    /**
+     * Metodo que se encarga de procesar el mensaje del servidor al invitar usuarios a un cuarto.
+     * @param mensajeServidor el mensaje a procesar del servidor
+     */
     public void procesaMensajeInvitaUsuariosCuarto(Mensajes mensajeServidor){
         if(mensajeServidor.getTipo().equals("INFO") 
                 && mensajeServidor.getMensaje().equals("success"))
@@ -473,6 +497,10 @@ public class ProcesadorCliente extends Procesador{
         salida.flush();
     }
     
+    /**
+     * Metodo que se encarga de procesar el mensaje del servidor al enviar un mensaje a un cuarto.
+     * @param mensajeServidor el mensaje a procesar del servidor
+     */
     public void procesaMensajeCuarto(Mensajes mensajeServidor){
         if(mensajeServidor.getTipo().equals("WARNING"))
             cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
