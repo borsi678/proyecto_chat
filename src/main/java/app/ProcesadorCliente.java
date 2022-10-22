@@ -9,7 +9,7 @@ import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 /**
- * <p> Clase que extiende de Procesador para impelemtar el comportamiento del Cliente</p>
+ * <p> Clase que extiende de Procesador para impelemtenar el comportamiento del Cliente</p>
  * 
  * <p> La clase se encarga de enviar mensajes al servidor que escribe el usuario
  *      asi como de recibir los mensajes que envia el servidor.</p>
@@ -45,16 +45,18 @@ public class ProcesadorCliente extends Procesador{
      */
     public void iniciaConexion(){
         try {
-            String mensajeServidorSerializado=entrada.readUTF();
-            Mensajes mensajeServidor=deserializaMensaje(mensajeServidorSerializado);
-            cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
+           String mensajeServidorSerializado;//entrada.readUTF();
+           Mensajes mensajeServidor;//deserializaMensaje(mensajeServidorSerializado);
+            //cliente.imprimeMensaje(mensajeServidor.getTipo()+" "+mensajeServidor.getMensaje());
             Scanner scanner = new Scanner(System.in);
             String nombre="";
             while(nombre.equals("")){
                     nombre=scanner.nextLine();
             }
             Mensajes mensajeCliente=MensajesServidorCliente.conTipoUsuario(String.format("IDENTIFY %s", nombre));
+            System.out.println(serializaMensaje(mensajeCliente));
             salida.writeUTF(serializaMensaje(mensajeCliente));
+            salida.flush();
             mensajeServidorSerializado=entrada.readUTF();
             mensajeServidor=deserializaMensaje(mensajeServidorSerializado);
             if(mensajeServidor.getTipo().equals("INFO") 
@@ -83,9 +85,11 @@ public class ProcesadorCliente extends Procesador{
     @Override public void run(){
         String mensajeServidor="";
         Mensajes mensaje;
-        while(true){
+        while(Cliente.getConexion()){
             try {
                 mensajeServidor=entrada.readUTF();
+                if(!Cliente.getConexion())
+                    return;
                 mensaje=deserializaMensaje(mensajeServidor);
                 mensajesRecibidos(mensaje);
             }catch(EOFException ex){

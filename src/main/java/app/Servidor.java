@@ -120,7 +120,7 @@ public class Servidor {
             salida.writeUTF(mensaje);
         }catch(SocketException ex){
             diccSocketsUsuarios.remove(usuario, clienteConectado);
-            ///PENDIENTE
+            
         }
     }
     
@@ -236,5 +236,18 @@ public class Servidor {
     
     public LinkedList<Cuarto> getListaCuartosServidor(){
         return listaCuartos;
+    }
+
+    public void eliminaConexion(Usuario usuario, Socket socketCliente){
+        this.diccSocketsUsuarios.remove(usuario, socketCliente);
+    }
+
+    public void eliminaUsuarioCuartos(Usuario usuario){
+        for(Cuarto cuarto : listaCuartos){
+            if(cuarto.estaUsuarioInvitado(usuario))
+                cuarto.eliminaUsuarioInvitado(usuario);
+            if(cuarto.estaUsuarioUnido(usuario)) 
+                cuarto.eliminaUsuarioUnido(usuario);
+        }
     }
 }

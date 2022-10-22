@@ -4,20 +4,33 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.EOFException;
-
+/**
+ * <p> Clase que extiende de Procesador para implemetar el comportamiento del servidor</p>
+ * <p> La clase se encarga de recibir los mennsajes del cliente, procesarlos y enviar los mensajes
+ * los clientes con las operaciones especificadas</p>
+ */
 public class ProcesadorServidor extends Procesador {
 
+    /**El servidor */
     private Servidor servidor;
+    /**EL enchuife del cliente conectado */
     private Socket socketCliente;
+    /**El usuario del cliente */
     private Usuario usuarioCliente;
+    /**Escape de bucles */
     private boolean salir=true;
     
+    /**Constructor unico que recibe un servidor y un socket
+     * @param servidor el servidor
+     * @param socketCliente el socket de la conexion del cliente
+      */
     public ProcesadorServidor(Servidor servidor, Socket socketCliente) throws IOException {
         this.servidor = servidor;
         this.socketCliente = socketCliente;
@@ -25,6 +38,9 @@ public class ProcesadorServidor extends Procesador {
         this.salida = new DataOutputStream(socketCliente.getOutputStream());
     }
 
+    /**Metodo para el hilo de ejecucion que se encarga de inicializar la conexion con el cliente,
+     * asi como procesar los mensajes que envie el cliente conectado.
+     */
     @Override
     public void run() {
         try {
@@ -42,6 +58,9 @@ public class ProcesadorServidor extends Procesador {
         }
     }
     
+    /**Metodo que se encarga de inciarlizar la conexcion con el cliente, recibiendo su identificacion.
+     * Se envia un mensaje si se realizo la operacion o hubo un error.
+     */
     public void procesaNuevaConexion(String nombreCliente) throws ExcepcionSerializa,ExcepcionDeserializa, IOException {
         if (!(nombreCliente.startsWith("{") && nombreCliente.endsWith("}"))) {
             throw new ExcepcionMensajeInvalido("Mensaje con el formato incorrecto");
@@ -64,7 +83,8 @@ public class ProcesadorServidor extends Procesador {
         this.servidor.transmiteMensajeClientes(serializaMensaje(mensaje));
         this.servidor.agregaSocketCliente(usuarioCliente, this.socketCliente);
     }
-    
+
+    /**Metodo que se encarga de recibir y procesar los emnsajes del cliente. */
     public void recibeMensajesCliente() {
         String mensajeClienteSerializado = "";
         Mensajes mensajeCliente;
@@ -73,12 +93,20 @@ public class ProcesadorServidor extends Procesador {
                 mensajeClienteSerializado = entrada.readUTF();
                 mensajeCliente = deserializaMensaje(mensajeClienteSerializado);
                 mensajesRecibidos(mensajeCliente);
+            } catch(SocketException ex){
+                servidor.eliminaConexion(usuarioCliente, socketCliente);
+                servidor.eliminaUsuarioCuartos(usuarioCliente);
+                return;
             } catch (IOException ex) {
 
             }
         }
     }
-
+    /**Metodo que se encarga de procesar los mensajes recibidos por el cliente, las posibles 
+     * operaciones son: STATUS, USERS, MESSAGE, PUBLIC_MESSAGE, NEW_ROOM, INVITE, JOIN_ROOM,
+     * ROOM_USERS, ROOM_MESSAGE.
+     * @param mensaje el mensaje a procesar.
+     */
     @Override
     public void mensajesRecibidos(Mensajes mensaje) {
         try {
@@ -376,6 +404,7 @@ public class ProcesadorServidor extends Procesador {
     public void desconectaUsuario() throws JsonProcessingException, IOException{
         String mensajeEnviar=String.format("DISCONNECTED %s", usuarioCliente.getNombre());
         Mensajes mensajeServidor= MensajesServidorCliente.conTipoUsuario(mensajeEnviar);
+        servidor.eliminaUsuarioUnidoACuarto(usuarioCliente, "General");
         salida.writeUTF(serializaMensaje(mensajeServidor));
         LinkedList<Cuarto> listaCuartos=servidor.getListaCuartosServidor();
         mensajeEnviar=String.format("LEFT_ROOM %s ", usuarioCliente.getNombre());

@@ -20,17 +20,17 @@ public class Cliente {
     }
 
     public void iniciaCliente() {
-//        Scanner scanner = new Scanner(System.in);
-//        System.out.println("Introduce la direccion IP del servidor");
-//        String direccionIP = scanner.nextLine();
-//        System.out.println("Introduce puerto del servidor");
-//        int puerto = scanner.nextInt();
-//        estableceConexionServidor(direccionIP, puerto);
-        estableceConexionServidor("localhost", 8999);
-        if(Cliente.getConexion() == false){
-            iniciaCliente();
-            return;
-        }
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Introduce la direccion IP del servidor");
+        String direccionIP = scanner.nextLine();
+        System.out.println("Introduce puerto del servidor");
+        int puerto = scanner.nextInt();
+        estableceConexionServidor(direccionIP, puerto);
+    //    estableceConexionServidor("localhost", 8999);
+        //if(!Cliente.getConexion(){
+        //    iniciaCliente();
+          //  return;
+        //}
         System.out.println("¡Bienvenido al chat!");
         escrituraMensajesUsuario();
         iniciaCliente();
@@ -51,15 +51,20 @@ public class Cliente {
     public void escrituraMensajesUsuario(){
         System.out.print("Escribe operacion:");
         String mensaje="";
-        while(!(mensaje.equals("DISCONNECT")) || !(mensaje.equals("^C")) || Cliente.getConexion()==true){
+        while(Cliente.getConexion()){
                 mensaje=scanner.nextLine();
+                if(mensaje.toUpperCase().equals("DISCONNECT")){
+                    procesador.menuMensajes(mensaje);
+                    Cliente.cambiaEstadoConexion(false);
+                    return;
+                }
+
                 if(Cliente.getConexion()==false)
                     return;
                 if(mensaje.equals("") || mensaje == null)
                     continue;
                 procesador.menuMensajes(mensaje);
         }
-        procesador.menuMensajes(mensaje);
     }
     
     public static void setNombreUsuario(String nombre){
